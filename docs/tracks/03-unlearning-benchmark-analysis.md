@@ -3,6 +3,7 @@
 - **Benchmark v1 (`run_15901661`) :** [summary.md](../../tracks/03_unlearning_v2/results/run_15901661/summary.md) · [summary.json](../../tracks/03_unlearning_v2/results/run_15901661/summary.json)
 - **Benchmark v2 (`run_15901741`) :** [summary.md](../../tracks/03_unlearning_v2/results/run_15901741/summary.md) · [summary.json](../../tracks/03_unlearning_v2/results/run_15901741/summary.json)
 - **Benchmark v3 (`run_15901899`) :** [summary.md](../../tracks/03_unlearning_v2/results/run_15901899/summary.md) · [summary.json](../../tracks/03_unlearning_v2/results/run_15901899/summary.json) · checkpoints `.pt` (`327.71 Mo`, `valid=True`) sur JURECA dans `output/benchmark_v3/`
+- **Benchmark v4 (`run_15902297`) :** [summary.md](../../tracks/03_unlearning_v2/results/run_15902297/summary.md) · [summary.json](../../tracks/03_unlearning_v2/results/run_15902297/summary.json) · checkpoints `.pt` dans `output/benchmark_v4/` (avec `Raw p50` et `Frac>95%`)
 
 ---
 
@@ -65,3 +66,21 @@
 2. **Candidat #1 — `H_ssd_lora_mod_aug.pt` :** meilleur compromis global (`Proxy KL = 0.0184`, `Proxy Agree = 92.49%`, `Absent KL = 0.0106`, `Stress CE = 2.458`).
 3. **Candidat #2 — `A_npo_mod_aug.pt` :** profil complémentaire plus doux et plus homogène (`Raw CE = 0.617±1.99`, `Raw Ent = 0.143`, `Δθ = 2.97`).
 4. **Prochaine étape :** renseigner `API_KEY` dans `submission.py`, soumettre `H_ssd_lora_mod_aug.pt` puis `A_npo_mod_aug.pt` pour calibrer nos seuils locaux contre le vrai score serveur (`forget_score`, `retain_score`, `val_acc`).
+
+---
+
+## 4. Résultats Benchmark v4 (`run_15902297` — Oubli homogène & métriques `p50` / `Frac>95%`)
+
+| Run | Raw CE (mean±std) | Raw p50 | Frac>95% | Raw Ent | Stress CE avg | Stress Agree avg | Proxy KL(T=2) | Absent KL(T=2) | Δθ L2 |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| `0_orig_baseline` | `0.000±0.00` | `0.000` | `1.00` | `0.002` | `1.267` | `0.801` | `0.0000` | `0.0000` | `0.00` |
+| `E_lora_bt_T3` | `0.013±0.10` | `0.000` | `0.96` | `0.036` | `1.222` | `0.765` | `0.0035` | `0.0017` | `4.18` |
+| `E_lora_bt_T4` | `0.053±0.17` | `0.007` | `0.81` | `0.171` | `1.232` | `0.721` | `0.0116` | `0.0069` | `6.82` |
+| **`E_lora_bt_T5`** | **`0.169±0.33`** | **`0.046`** | **`0.52`** | **`0.507`** | **`1.313`** | **`0.676`** | **`0.0189`** | **`0.0119`** | `9.48` |
+| `H_ssd_lora_bt_T4` | `0.053±0.18` | `0.006` | `0.82` | `0.170` | `1.223` | `0.722` | `0.0120` | `0.0068` | `7.20` |
+| `A_npo_gentle_ce0.45` | `0.011±0.19` | `0.000` | `0.98` | `0.016` | `1.403` | `0.770` | `0.0036` | `0.0021` | `1.30` |
+| `H_ssd_npo_gentle` | `0.556±2.19` | `0.000` | `0.93` | `0.057` | `1.928` | `0.730` | `0.0065` | `0.0040` | `3.05` |
+
+### Enseignements clés
+1. **Validation des nouvelles métriques (`p50` & `Frac>95%`) :** `H_ssd_npo_gentle` semblait avoir `CE = 0.556`, mais `p50 = 0.000` et `Frac>95% = 0.93` prouvent qu'il laisse **93 %** des images intactes (bimodal).
+2. **`E_lora_bt_T5` (`LoRA + Bad-Teacher T=5`) :** oubli **vraiment homogène** (`std = 0.33`, `Frac>95%` divisé par 2 à `0.52`, `Raw Ent = 0.507`) tout en gardant `Proxy KL = 0.0189` et `Absent KL = 0.0119`. Candidat prioritaire pour la soumission de `19h12` !

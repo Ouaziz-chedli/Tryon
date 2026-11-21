@@ -170,7 +170,12 @@ $$\text{final\_score} = \text{forget\_score} \times \text{retain\_score} \quad \
 
 ### 2026-11-21 (18h59) — Construction de la Piste `G` (Ground-Truth Lab) & Test de cohérence
 - **Objectif :** construire notre propre labo vérité terrain sur `imagenet-100` (`orig_lab` entraîné sur `R+F` vs `gold_lab` entraîné sur `R` seul), implémenter les formules exactes du serveur (`tracks/03_unlearning_v2/lab/server_metrics.py`), puis vérifier la cohérence en reproduisant le classement de nos 2 soumissions réelles (`A_npo_mod_aug` = `0.0843` > `H_ssd_lora_mod_aug` = `0.0287`).
-- Si le test de cohérence est positif, tous les benchmarks et sous-agents par piste basculent sur ce banc.
+- **Si le test de cohérence est positif**, tous les benchmarks et sous-agents par piste basculent sur ce banc.
+
+### 2026-11-21 (19h10) — Résultats Benchmark v4 (`run_15902297` sur `jrc0324`)
+- **Synthèse :** 6 runs terminés, collectés dans `tracks/03_unlearning_v2/results/run_15902297/` et analysés dans [03-unlearning-benchmark-analysis.md](03-unlearning-benchmark-analysis.md).
+- **`H_ssd_npo_gentle` démasqué par `p50`/`Frac>95%` :** `Raw CE = 0.556±2.19`, mais `p50 = 0.000` et `Frac>95% = 0.93` (93 % des images inchangées).
+- **`E_lora_bt_T5` (Meilleur profil homogène) :** `Raw CE = 0.169±0.33`, `Raw p50 = 0.046`, `Frac>95% = 0.52`, `Raw Ent = 0.507`, `Proxy KL(T=2) = 0.0189`, `Absent KL(T=2) = 0.0119`. Prêt pour soumission à `19h12`.
 
 ### 2026-11-21 (18h57) — 2ᵉ soumission serveur (`A_npo_mod_aug.pt`) : Score `0.0843` (×2,94 !)
 - **Résultat :** `Score (public split): 0.0843` (`Previous best: 0.0287`, `improved: True`). Prochaine soumission possible vers **`19h12`**.
