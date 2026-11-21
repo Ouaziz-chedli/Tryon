@@ -79,22 +79,27 @@ def _probe_step(
     return float(ce_i.mean()), float(ce_i.std()), float(ce_i.median()), frac95, pkl, d_l2
 
 
-def _snapshot_score(ce_mean: float, ce_std: float, p50: float, f95: float, pkl: float, d_l2: float) -> float:
-    """Score intermediate snapshot via linear clipped distance to Gold p50~0.50 and natural std~1.35."""
-    d_sub = abs(p50 - 0.50) + 0.25 * abs(ce_std - 1.35) + 0.6 * max(0.0, f95 - 0.35)
-    f_score = 1.0 - min(1.0, d_sub / 1.15)
-    drift_pen = 15.0 * max(0.0, pkl - 0.038) + 0.6 * max(0.0, d_l2 - 4.0)
+def _snapshot_score(
+    ce_mean: float, ce_std: float, p50: float, f95: float, pkl: float, d_l2: float,
+    target_p50: float = 0.50,
+) -> float:
+    """Score intermediate snapshot dynamically around target_p50 while guarding drift."""
+    tgt = max(target_p50, 0.45)
+    tgt_std = max(1.35, 1.35 * tgt)
+    d_sub = abs(p50 - tgt) / tgt + 0.20 * abs(ce_std - tgt_std) / tgt_std + 0.6 * max(0.0, f95 - 0.25)
+    f_score = 1.0 - min(1.0, d_sub / 1.25)
+    drift_pen = 15.0 * max(0.0, pkl - 0.048) + 0.5 * max(0.0, d_l2 - 4.6)
     return f_score - drift_pen
 
 
 def _adjust_controller(opt: torch.optim.Optimizer, kl_w: float, l2_w: float, pkl: float, d_l2: float, p50: float) -> tuple[float, float]:
     """Closed-loop PI-style adjustment of retain KL, L2 anchor, and learning rate."""
-    if pkl > 0.032 or d_l2 > 3.2:
+    if pkl > 0.048 or d_l2 > 4.6:
         kl_w = min(8.0, kl_w * 1.35)
         l2_w = min(0.05, l2_w * 1.5)
         for g in opt.param_groups:
             g["lr"] = max(2e-5, g["lr"] * 0.85)
-    elif pkl < 0.020 and d_l2 < 2.5 and p50 < 0.15:
+    elif pkl < 0.025 and d_l2 < 3.0 and p50 < 0.25:
         kl_w = max(1.0, kl_w * 0.85)
     return kl_w, l2_w
 
@@ -170,17 +175,18 @@ def run_adaptive_salun_npo(
     best_score, best_sd = -1e9, None
     f_probe, pseudo_probe, p_probe, orig_p_probe = _sample_probes(f_x, pseudo, p_x, orig_p, seed=cfg.seed)
 
+    upper_p50 = max(cfg.target_ce_upper, cfg.target_forget_ce * 1.45)
     for step in range(1, cfg.steps + 1):
         _adaptive_step(student, orig_model, opt, f_x, orig_f, pseudo, p_x, orig_p, orig_params, masks, absent_mask, cfg, kl_w, l2_w)
         if step % 15 != 0:
             continue
         ce_mean, ce_std, p50, f95, pkl, d_l2 = _probe_step(student, f_probe, pseudo_probe, p_probe, orig_p_probe, orig_params)
         kl_w, l2_w = _adjust_controller(opt, kl_w, l2_w, pkl, d_l2, p50)
-        snap_score = _snapshot_score(ce_mean, ce_std, p50, f95, pkl, d_l2)
-        if 0.18 <= p50 <= 0.85 and pkl <= 0.055 and snap_score > best_score:
+        snap_score = _snapshot_score(ce_mean, ce_std, p50, f95, pkl, d_l2, target_p50=cfg.target_forget_ce)
+        if 0.18 <= p50 <= upper_p50 + 0.25 and pkl <= 0.065 and snap_score > best_score:
             best_score = snap_score
             best_sd = {k: v.detach().cpu().clone() for k, v in student.state_dict().items()}
-        if p50 > cfg.target_ce_upper + 0.15 and best_sd is not None:
+        if p50 > upper_p50 + 0.25 and best_sd is not None:
             break
     if best_sd is not None:
         student.load_state_dict(best_sd)
