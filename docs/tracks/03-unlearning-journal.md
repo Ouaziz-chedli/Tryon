@@ -374,6 +374,19 @@ $$\text{final\_score} = \text{forget\_score} \times \text{retain\_score} \quad \
 - **Checkpoints rapatriés en local (`tracks/03_unlearning_v2/output/colab_autotune/`) et arrêt des 2 VMs Colab (`0 CU/h`) :**
   - `AT_ce0.50_b3.0_f8.pt` (`SW = +0.609`), `AT_ce0.50_b2.0_f6.pt` (`SW = +0.448`, domine `#5` Pareto-strictement), `LORA_ce0.50_r16.pt` (`ProxyKL = 0.0114`), `TS_ce0.50_b2.5_k25.pt` (`SW = +0.384`).
 
+### 2026-11-22 (00h39–00h46) — Benchmark d'Oubli Sélectif Intra-Classe & Inter-Classes sur `forget_images.npz` (`selective_benchmark.py`, 2× A100 Colab)
+- **Protocole implémenté dans [selective_benchmark.py](../../tracks/03_unlearning_v2/selective_benchmark.py) ([test_selective_benchmark.py](../../tracks/03_unlearning_v2/tests/test_selective_benchmark.py) `SELECTIVE_BENCHMARK_TESTS_OK`) :**
+  1. **Split Intra-Classe (50/50 dans chacune des 45 classes actives) :** entraîner l'oubli uniquement sur $50\%$ des images de chaque classe ($F_{\text{forget}}$, `1 750` images) et évaluer sur les $50\%$ d'images retenues de la **même classe** ($R_{\text{same\_class}}$, `1 750` vraies images). Mesure la vraie sélectivité instance-par-instance (`gap = F_ce - R_ce`) vs l'effondrement du prototype de classe (`R_acc`, `R_kl`).
+  2. **Split Inter-Classes (22 classes actives oubliées vs 23 classes actives retenues) :** entraîner l'oubli sur 22 classes actives et évaluer les dégâts collatéraux sur les vraies images des **23 autres classes actives** ($R_{\text{other\_classes}}$ : `R_acc`, `R_kl`).
+- **Résultats comparatifs des 4 finalistes (`selective_worker_0.json` + `selective_worker_1.json`, les 2 VMs Colab stoppées à `0 CU/h`) :**
+
+| Candidat | `SEL` | **Intra `F_ce` (`p50`)** | **Intra `R_ce`** | **Gap Intra (`F_ce - R_ce`)** | **Intra `R_acc`** | **Intra `R_kl`** | **Cross `F_ce`** | **Cross `R_acc`** | **Cross `R_kl`** | Verdict |
+| :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :--- |
+| **`AT_ce0.50_b3.0_f8`** | **`0.3407`** | **`0.950` (`0.105`)** | **`0.587`** | **`+0.363` (+62 %)** | **`82.6 %`** | **`0.6909`** | **`1.125`** | **`99.5 %`** | **`0.0547`** | **Gagnant équilibré** : oubli franc (`F_ce ~ 1.0`) + forte sélectivité intra-classe (`82.6 %` >> gate `70 %`) + dérive inter-classes quasi nulle (`99.5 %`, `KL = 0.0547`) |
+| `TS_ce0.50_b2.5_k25` | `0.4140`* | `0.212` (`0.017`) | `0.101` | `+0.111` (+110 %) | `97.3 %` | `0.3027` | `0.286` | `99.9 %` | `0.0591` | Très sélectif mais **sous-oubli** en amplitude absolue (`F_ce = 0.212`, `p50 = 0.017`, comme `#3` à `0.0117`) |
+| **`AT_ce0.50_b2.0_f6`** | `0.1425` | **`1.430` (`0.381`)** | `0.991` | **`+0.440` (+44 %)** | `72.0 %` | `0.9705` | **`1.847`** | `98.2 %` | `0.1246` | Plus fort écart absolu (`+0.440`) et oubli soutenu, mais `Intra R_acc = 72.0 %` proche du seuil `70 %` |
+| `LORA_ce0.50_r16` | `0.0339` | `0.304` (`0.109`) | `0.273` | `+0.031` *(quasi nul)* | `92.9 %` | `0.7465` | `0.366` | `99.1 %` | `0.2231` | **Éliminé** : aucune sélectivité intra-classe (`0.304` vs `0.273`, dégrade toute la classe) et `Cross R_kl = 0.2231` (4× pire que `AT_b3.0_f8`) |
+
 ---
 
 ## 4. Défis techniques priorisés & Stratégies candidates
