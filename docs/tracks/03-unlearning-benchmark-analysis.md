@@ -103,4 +103,7 @@
 - **Essai 2 (`350 imgs/classe`, `blocks.6..11`, 6 ép., Colab A100) :** [lab_cifar100_v2/coherence_report.json](../../tracks/03_unlearning_v2/results/lab_cifar100_v2/coherence_report.json)
   - `orig_lab val_acc = 0.4772`, `gold_oracle val_acc = 0.4576` (encore sous `0.70` car `blocks.0..5` gelés sur `32×32` CIFAR-100).
   - Classement toujours cohérent avec le serveur : **`A_npo_mod_aug`** (`forget=0.3232`, `retain=0.3119`) **>>** **`H_ssd_lora_mod_aug`** (`forget=0.0052`, `retain=0.0327`).
-  - *Suite :* débloquer tout le ViT (`blocks.0..11`) ou utiliser `clane9/imagenet-100` sur Colab A100 pour dépasser `val_acc >= 85%`.
+- **Essai 3 (`clane9/imagenet-100`, `blocks.0..11`, 5 ép., Colab A100) :** [lab_in100/coherence_report.json](../../tracks/03_unlearning_v2/results/lab_in100/coherence_report.json)
+  - `orig_lab val_acc = 0.3412`, `gold_oracle val_acc = 0.3288` (5 époques sans augmentation ni `lr` élevé sur `head` sont insuffisantes).
+  - Classement toujours confirmé : **`A_npo_mod_aug`** (`forget=0.2755`, `retain=0.7131`, `pred=0.7551`) **>>** **`H_ssd_lora_mod_aug`** (`forget=0.0173`, `retain=0.0390`).
+  - *Suite :* passer à `10 époques` avec `head lr=1e-3` / `backbone lr=5e-5` + augmentations pour dépasser `val_acc >= 85%`, puis lancer nos sous-agents par piste.

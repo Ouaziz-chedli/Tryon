@@ -227,6 +227,12 @@ $$\text{final\_score} = \text{forget\_score} \times \text{retain\_score} \quad \
 - **Constat infra soumission :** `requests.post` de 328 Mo depuis Colab US vers `34.147.229.55` a expiré en `TimeoutError` (soumissions restreintes / optimisées depuis JURECA) $\implies$ **pipeline validé :** calcul sur Colab A100 $\rightarrow$ `colab download` $\rightarrow$ transfert vers JURECA & soumission via `submission.py` (0 slot GPU Slurm).
 - **Lab `clane9/imagenet-100`** (`blocks.0..11 + head` débloqués, `5 époques`) lancé sur Colab A100 (`task-1254`).
 
+### 2026-11-21 (20h43) — Résultats Lab `clane9/imagenet-100` (`lab_in100/coherence_report.json`)
+- **Cohérence 100 % confirmée sur 2 datasets :**
+  - `A_npo_mod_aug` : `forget_score = 0.2755` (`mean_std = 0.3649`, `pred = 0.7551`) × `retain_score = 0.7131` = **`0.1965`** (hors gate).
+  - `H_ssd_lora_mod_aug` : `forget_score = 0.0173` × `retain_score = 0.0390` = **`0.0007`**.
+- **Constat `val_acc` (`orig_lab = 0.3412`) :** les indices `0..99` de `clane9/imagenet-100` ne correspondent pas à ceux de `model.pt`, et 5 époques sans augmentation ne suffisent pas pour remonter de 1 % à 85 %. Pour obtenir `val_acc >= 85%` en ~2 min sur A100 : entraîner avec `lr` différencié (`head` à `1e-3`, backbone à `5e-5`) sur `10 époques` + augmentations de base (`hflip` + `RandomResizedCrop`).
+
 ---
 
 ## 4. Défis techniques priorisés & Stratégies candidates
