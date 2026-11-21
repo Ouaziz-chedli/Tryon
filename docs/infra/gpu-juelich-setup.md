@@ -2,6 +2,20 @@
 
 Source : [GPU-usage-paris.pdf](file:///home/chedli/Code/20-Casquettes/hackatons/European_AI_Championship/docs/infra/GPU-usage-paris.pdf)
 
+## État actuel — Team `TRYON` (déjà configuré)
+
+> **Tout le setup initial est terminé.** Les teammates partagent le compte `ouaziz1` (voir [infra/team-access.md](file:///home/chedli/Code/20-Casquettes/hackatons/European_AI_Championship/infra/team-access.md) et `python3 scripts/totp.py`).
+
+- **Compte JSC :** `ouaziz1` · **Projet :** `training2666` · **Login node testé :** `jrlogin06.jureca`
+- **JuDoor :** MFA TOTP activé, Usage Agreements `jureca` et `judac` signés, clé SSH `infra/juelich_ed25519.pub` propagée et active.
+- **Dossier partagé sur JURECA :** `/p/scratch/training2666/ouaziz1/TRYON/`
+  - `model_equality/` — téléchargé + `.venv/` prêt (`scikit-learn`, `numpy`, `pandas`, `scipy`, `requests`).
+  - `unlearning/` — téléchargé (`model.pt`, `forget_images.npz`) + `.venv/` prêt (`torch 2.15.0`, `torchvision 0.29.2`, `timm 1.0.31`, CUDA 13).
+  - `Hackathon_Watermark_Localisation_Task/` — téléchargé (`README.txt`, `starter_kit.zip`, `train.zip`, `test.zip`) ; **à faire :** dézipper les archives et créer le `.venv/` si nécessaire.
+  - `.uv/` et `.cache/` — caches partagés configurés dans `~/.bashrc`.
+
+---
+
 ## 1. Ressources disponibles
 - **40 compute nodes** (1 nœud réservé par job) :
   - `4× NVIDIA A100` (40 GB HBM2e chacun)

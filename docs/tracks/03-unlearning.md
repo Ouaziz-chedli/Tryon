@@ -3,6 +3,7 @@
 - **Source :** [Unlearning.pdf](file:///home/chedli/Code/20-Casquettes/hackatons/European_AI_Championship/docs/tracks/Unlearning.pdf)
 - **Superviseurs :** Adam Dziedzic, Franziska Boenisch (CISPA)
 - **Starter kit :** `https://huggingface.co/datasets/SprintML/unlearning`
+- **Sur JURECA (`TRYON`) :** `/p/scratch/training2666/ouaziz1/TRYON/unlearning/` (`.venv/` prêt avec `torch 2.15.0` & `timm 1.0.31`, `model.pt`, `forget_images.npz`, `task_template.py`, `submission.py`).
 
 ## 1. Objectif
 On dispose d'un classifieur **ViT-B/16** (`timm vit_base_patch16_224`, 100 classes, `LayerScale init 1e-4`) pré-entraîné (`model.pt`) et de **3 500 images à oublier** (`forget_images.npz`, shape `[3500, 224, 224, 3]`, **sans labels**).

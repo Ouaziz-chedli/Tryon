@@ -3,6 +3,7 @@
 - **Source :** [Model Equality Testing.pdf](file:///home/chedli/Code/20-Casquettes/hackatons/European_AI_Championship/docs/tracks/Model%20Equality%20Testing.pdf)
 - **Superviseurs :** Adam Dziedzic, Franziska Boenisch (CISPA)
 - **Starter kit :** `https://huggingface.co/datasets/SprintML/model_equality`
+- **Sur JURECA (`TRYON`) :** `/p/scratch/training2666/ouaziz1/TRYON/model_equality/` (`.venv/` prêt, `query_reference.py`, `score_practice.py`, `task_template.py`, `submission.py`).
 
 ## 1. Objectif
 Auditer **33 endpoints LLM** (`ep-01` à `ep-33`) en boîte noire (texte généré uniquement) pour :

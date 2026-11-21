@@ -3,6 +3,7 @@
 - **Source :** [Watermark Localization.pdf](file:///home/chedli/Code/20-Casquettes/hackatons/European_AI_Championship/docs/tracks/Watermark%20Localization.pdf)
 - **Superviseurs :** Adam Dziedzic, Franziska Boenisch (CISPA)
 - **Starter kit :** `https://huggingface.co/datasets/SprintML/Hackathon_Watermark_Localisation_Task_Paris`
+- **Sur JURECA (`TRYON`) :** `/p/scratch/training2666/ouaziz1/TRYON/Hackathon_Watermark_Localisation_Task/` (`README.txt`, `starter_kit.zip`, `train.zip`, `test.zip` téléchargés — dézipper avant usage).
 
 ## 1. Objectif
 Identifier **quelles zones d'une image (`512×512`) portent un watermark post-hoc** après des altérations/éditions partielles.
