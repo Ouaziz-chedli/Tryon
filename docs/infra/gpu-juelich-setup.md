@@ -6,7 +6,7 @@ Source : [GPU-usage-paris.pdf](file:///home/chedli/Code/20-Casquettes/hackatons/
 
 > **Tout le setup initial est terminé.** Les teammates partagent le compte `ouaziz1` (voir [infra/team-access.md](file:///home/chedli/Code/20-Casquettes/hackatons/European_AI_Championship/infra/team-access.md) et `python3 scripts/totp.py`).
 
-- **Compte JSC :** `ouaziz1` · **Projet :** `training2666` · **Login node testé :** `jrlogin06.jureca`
+- **Compte Team Lead :** `ouaziz1` · **Coéquipiers :** `sangkhavongs1`, `bassim1` · **Projet :** `training2666` · **Login node testé :** `jrlogin06.jureca`
 - **JuDoor :** MFA TOTP activé, Usage Agreements `jureca` et `judac` signés, clé SSH `infra/juelich_ed25519.pub` propagée et active.
 - **Dossier partagé sur JURECA :** `/p/scratch/training2666/ouaziz1/TRYON/`
   - `model_equality/` — téléchargé + `.venv/` prêt (`scikit-learn`, `numpy`, `pandas`, `scipy`, `requests`).
@@ -84,11 +84,13 @@ source hackathon_setup.sh
 ```
 Le dossier partagé est créé dans `/p/scratch/training2666/<team-lead>/<team-folder>/` (contient les 3 datasets, `.venv/` par tâche, `.uv/` et `.cache/`).
 
-2. **Teammates (après la fin de `hackathon_setup.sh`) :**
+2. **Teammates (`sangkhavongs1`, `bassim1` — depuis leur propre compte JURECA) :**
 ```bash
 mkdir -p ~/hackathon-scripts && cd ~/hackathon-scripts
 wget https://huggingface.co/datasets/SprintML/hackathon/resolve/main/teammate.sh -O teammate.sh
-# Éditer TEAM_LEAD et TEAM_FOLDER dans teammate.sh (vérifier PROJECT_NAME="training2666")
+sed -i 's/^TEAM_LEAD=.*/TEAM_LEAD="ouaziz1"/' teammate.sh
+sed -i 's/^TEAM_FOLDER=.*/TEAM_FOLDER="TRYON"/' teammate.sh
+sed -i 's/PROJECT_NAME="training2625"/PROJECT_NAME="training2666"/' teammate.sh
 source teammate.sh
 ```
 
