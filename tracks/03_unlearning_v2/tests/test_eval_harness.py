@@ -1,6 +1,7 @@
 """Unit tests for Track 3 Phase 3 local validation harness (CPU, synthetic)."""
 
 from pathlib import Path
+import inspect
 import sys
 import tempfile
 import torch
@@ -11,6 +12,7 @@ from eval_harness import (
     compute_kl_at_temperature,
     compute_stress_metrics,
     compute_weight_drift,
+    evaluate_candidate,
     make_patchmix_proxy,
     make_stress_suite,
     validate_checkpoint,
@@ -58,3 +60,7 @@ def test_validate_checkpoint_missing_and_non_float32() -> None:
         res = validate_checkpoint(bad_path)
         assert not res.valid
         assert any("float32" in e for e in res.errors)
+
+
+def test_evaluate_candidate_uses_out_of_sample_seed_999() -> None:
+    assert inspect.signature(evaluate_candidate).parameters["seed"].default == 999

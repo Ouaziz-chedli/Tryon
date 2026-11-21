@@ -12,10 +12,18 @@ from contracts import EvalReport, MethodConfig
 from eval_harness import compute_kl_at_temperature, evaluate_candidate, make_patchmix_proxy
 from methods.abliteration import run_abliteration
 from methods.bad_teacher import run_bad_teacher
-from methods.common import l2_anchor_loss, mask_absent_head_grads, npo_loss, prepare_student, retain_kl_loss
+from methods.common import (
+    build_optimizer,
+    compute_forget_loss,
+    get_batch_orig_logits,
+    l2_anchor_loss,
+    mask_absent_head_grads,
+    prepare_student,
+    retain_kl_loss,
+)
 from methods.lora_unlearn import run_lora_npo
 from methods.salun_npo import compute_tempered_saliency
-from task_template import IMAGE_SIZE, NUM_CLASSES, load_model, predict
+from task_template import IMAGE_SIZE, NUM_CLASSES, load_model, predict, preprocess
 
 
 def score_sweet_spot(ev: EvalReport) -> float:
@@ -59,7 +67,7 @@ def _probe_step(
     ce_i = torch.nn.functional.cross_entropy(sub_f, pseudo_probe, reduction="none")
     frac95 = float((torch.softmax(sub_f, dim=-1).max(dim=-1).values > 0.95).float().mean())
     sub_p = predict(student, p_probe, batch_size=128)
-    pkl = compute_kl_at_temperature(orig_p_probe, sub_p, temperature=2.0)
+    pkl = float(compute_kl_at_temperature(orig_p_probe, sub_p, temperature=2.0).mean().item())
     d_l2 = float(sum(float((p.detach() - orig_params[n]).pow(2).sum()) for n, p in student.named_parameters() if n in orig_params) ** 0.5)
     return float(ce_i.median()), frac95, pkl, d_l2
 
@@ -76,67 +84,107 @@ def _adjust_controller(opt: torch.optim.Optimizer, kl_w: float, l2_w: float, pkl
     return kl_w, l2_w
 
 
+def _stratified_indices(labels: torch.Tensor, count: int, seed: int) -> torch.Tensor:
+    """Select up to `count` shuffled indices stratified across all classes in `labels`."""
+    gen = torch.Generator().manual_seed(seed)
+    perm = torch.randperm(len(labels), generator=gen)
+    buckets = [perm[labels[perm] == c] for c in labels.unique(sorted=True)]
+    picked: list[torch.Tensor] = []
+    max_len = max((len(b) for b in buckets), default=0)
+    for i in range(max_len):
+        for b in buckets:
+            if i >= len(b):
+                continue
+            picked.append(b[i])
+            if len(picked) == count:
+                return torch.stack(picked)
+    return torch.stack(picked) if picked else perm[:0]
+
+
+def _sample_probes(
+    f_x: torch.Tensor, pseudo: torch.Tensor, p_x: torch.Tensor, orig_p: torch.Tensor,
+    n_probe: int = 256, seed: int = 42,
+) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]:
+    """Sample shuffled stratified forget probe and shuffled retain probe."""
+    f_idx = _stratified_indices(pseudo, min(n_probe, len(f_x)), seed)
+    p_idx = torch.randperm(len(p_x), generator=torch.Generator().manual_seed(seed + 1))[: min(n_probe, len(p_x))]
+    return f_x[f_idx], pseudo[f_idx], p_x[p_idx], orig_p[p_idx]
+
+
+def _adaptive_step(
+    student: torch.nn.Module, orig_model: torch.nn.Module, opt: torch.optim.Optimizer,
+    f_x: torch.Tensor, orig_f: torch.Tensor, pseudo: torch.Tensor,
+    p_x: torch.Tensor, orig_p: torch.Tensor, orig_params: dict[str, torch.Tensor],
+    masks: dict[str, torch.Tensor], absent_mask: torch.Tensor,
+    cfg: MethodConfig, kl_w: float, l2_w: float,
+) -> None:
+    student.train()
+    f_idx = torch.randint(0, len(f_x), (cfg.batch_size,))
+    p_idx = torch.randint(0, len(p_x), (cfg.batch_size,))
+    f_batch = augment_training_batch(f_x[f_idx], mode=cfg.aug_mode)
+    dev = next(student.parameters()).device
+    with torch.autocast(device_type="cuda", dtype=torch.float16, enabled=torch.cuda.is_available()):
+        sub_f = student(preprocess(f_batch).to(dev))
+    orig_batch = get_batch_orig_logits(orig_model, f_batch, orig_f[f_idx], cfg.aug_mode)
+    loss_f = compute_forget_loss(sub_f, orig_batch, pseudo[f_idx].to(dev), cfg)
+    loss_r = retain_kl_loss(student, p_x[p_idx], orig_p[p_idx], cfg.temperature)
+    total = loss_f + kl_w * loss_r + l2_w * l2_anchor_loss(student, orig_params)
+    opt.zero_grad(set_to_none=True)
+    total.backward()
+    for n, p in student.named_parameters():
+        if p.grad is not None and n in masks:
+            p.grad.mul_(masks[n])
+    mask_absent_head_grads(student, absent_mask)
+    opt.step()
+
+
 def run_adaptive_salun_npo(
     base_model: torch.nn.Module, orig_model: torch.nn.Module, f_x: torch.Tensor,
     orig_f: torch.Tensor, p_x: torch.Tensor, orig_p: torch.Tensor,
     absent_mask: torch.Tensor, cfg: MethodConfig,
 ) -> torch.nn.Module:
-    """Closed-loop SalUn+NPO with per-sample max_ce gating and best-snapshot restore."""
+    """Closed-loop SalUn+forget-loss with stratified probes and best-snapshot restore."""
     torch.manual_seed(cfg.seed)
     student = prepare_student(base_model, cfg.freeze_until_block)
     pseudo = orig_f.argmax(dim=-1)
-    masks = compute_tempered_saliency(student, f_x, pseudo, cfg.salun_keep_ratio, cfg.temperature)
+    masks = compute_tempered_saliency(student, f_x, pseudo, cfg.salun_keep_ratio, cfg.temperature, seed=cfg.seed)
     orig_params = {n: p.detach().clone() for n, p in orig_model.named_parameters() if n in masks}
-    opt = torch.optim.AdamW([p for p in student.parameters() if p.requires_grad], lr=cfg.lr)
+    opt = build_optimizer(student, cfg.lr, cfg.head_lr_mult)
     kl_w, l2_w = cfg.retain_kl_weight, cfg.l2_weight
     best_score, best_sd = -1e9, None
-    f_probe, p_probe = f_x[:256], p_x[:256]
-    pseudo_probe, orig_p_probe = pseudo[:256], orig_p[:256]
+    f_probe, pseudo_probe, p_probe, orig_p_probe = _sample_probes(f_x, pseudo, p_x, orig_p, seed=cfg.seed)
 
     for step in range(1, cfg.steps + 1):
-        student.train()
-        f_idx = torch.randint(0, len(f_x), (cfg.batch_size,))
-        p_idx = torch.randint(0, len(p_x), (cfg.batch_size,))
-        f_batch = augment_training_batch(f_x[f_idx], mode=cfg.aug_mode)
-        with torch.autocast(device_type="cuda", dtype=torch.float16, enabled=torch.cuda.is_available()):
-            sub_f = student(f_batch.to(next(student.parameters()).device).permute(0, 3, 1, 2).float().div(127.5).sub(1.0))
-        dev = next(student.parameters()).device
-        loss_f = npo_loss(sub_f, orig_f[f_idx].to(dev), pseudo[f_idx].to(dev), cfg.npo_beta, cfg.temperature, max_ce=cfg.target_forget_ce)
-        loss_r = retain_kl_loss(student, p_x[p_idx], orig_p[p_idx], cfg.temperature)
-        total = loss_f + kl_w * loss_r + l2_w * l2_anchor_loss(student, orig_params)
-        opt.zero_grad(set_to_none=True)
-        total.backward()
-        for n, p in student.named_parameters():
-            if p.grad is not None and n in masks:
-                p.grad.mul_(masks[n])
-        mask_absent_head_grads(student, absent_mask)
-        opt.step()
-        if step % 15 == 0:
-            p50, f95, pkl, d_l2 = _probe_step(student, f_probe, pseudo_probe, p_probe, orig_p_probe, orig_params)
-            kl_w, l2_w = _adjust_controller(opt, kl_w, l2_w, pkl, d_l2, p50)
-            snap_score = p50 - 0.5 * f95 - 8.0 * max(0.0, pkl - 0.035) - 0.5 * max(0.0, d_l2 - 3.3)
-            if p50 >= 0.15 and pkl <= 0.042 and snap_score > best_score:
-                best_score = snap_score
-                best_sd = {k: v.detach().cpu().clone() for k, v in student.state_dict().items()}
+        _adaptive_step(student, orig_model, opt, f_x, orig_f, pseudo, p_x, orig_p, orig_params, masks, absent_mask, cfg, kl_w, l2_w)
+        if step % 15 != 0:
+            continue
+        p50, f95, pkl, d_l2 = _probe_step(student, f_probe, pseudo_probe, p_probe, orig_p_probe, orig_params)
+        kl_w, l2_w = _adjust_controller(opt, kl_w, l2_w, pkl, d_l2, p50)
+        snap_score = p50 - 0.5 * f95 - 8.0 * max(0.0, pkl - 0.035) - 0.5 * max(0.0, d_l2 - 3.3)
+        if p50 >= 0.15 and pkl <= 0.042 and snap_score > best_score:
+            best_score = snap_score
+            best_sd = {k: v.detach().cpu().clone() for k, v in student.state_dict().items()}
     if best_sd is not None:
         student.load_state_dict(best_sd)
     return student.eval()
 
 
 def _build_trials() -> list[tuple[str, MethodConfig]]:
-    """Build 16 multi-strategy trials across Adaptive SalUn+NPO, LoRA, Bad-Teacher, Abliteration+NPO."""
+    """Build multi-strategy trials including P1 two-sided/gold-mimic and P2 block-8 freeze."""
     trials: list[tuple[str, MethodConfig]] = []
-    for ce_tgt in (0.35, 0.50, 0.65):
-        for lr, keep, frz in ((8e-5, 0.25, 6), (1.2e-4, 0.20, 8)):
-            name = f"AT_ce{ce_tgt:.2f}_lr{lr:.0e}_k{int(keep*100)}_f{frz}"
-            trials.append(("adaptive", MethodConfig(name=name, strategy="salun_npo", steps=210, lr=lr, target_forget_ce=ce_tgt, retain_kl_weight=2.5, l2_weight=2e-3, salun_keep_ratio=keep, freeze_until_block=frz)))
-    for ce_tgt, rank in ((0.40, 8), (0.55, 8), (0.50, 16)):
-        name = f"LORA_ce{ce_tgt:.2f}_r{rank}"
-        trials.append(("lora_npo", MethodConfig(name=name, strategy="lora_npo", steps=180, lr=8e-5, target_forget_ce=ce_tgt, retain_kl_weight=3.0, lora_rank=rank)))
-    for temp, lr in ((3.0, 3e-5), (4.5, 4e-5)):
-        trials.append(("bad_teacher", MethodConfig(name=f"BT_T{temp:.1f}_lr{lr:.0e}", strategy="bad_teacher", steps=160, lr=lr, bad_teacher_temp=temp, retain_kl_weight=3.0)))
+    for p_star, frz, h_mult in ((0.55, 8, 1.5), (0.60, 8, 1.5), (0.60, 6, 1.0), (0.65, 8, 2.0)):
+        name = f"GM_p{int(p_star*100)}_f{frz}_hm{h_mult:.1f}"
+        trials.append(("adaptive", MethodConfig(name=name, strategy="salun_npo", loss_kind="gold_mimic", steps=210, lr=8e-5, gold_target_prob=p_star, retain_kl_weight=2.5, l2_weight=2e-3, salun_keep_ratio=0.25, freeze_until_block=frz, head_lr_mult=h_mult)))
+    for ce_tgt, upper, frz in ((0.45, 0.65, 8), (0.50, 0.70, 8), (0.45, 0.65, 6)):
+        name = f"TS_ce{ce_tgt:.2f}_u{upper:.2f}_f{frz}"
+        trials.append(("adaptive", MethodConfig(name=name, strategy="salun_npo", loss_kind="two_sided_npo", steps=210, lr=8e-5, target_forget_ce=ce_tgt, target_ce_upper=upper, pullback_weight=0.5, retain_kl_weight=2.5, l2_weight=2e-3, salun_keep_ratio=0.25, freeze_until_block=frz)))
+    for ce_tgt, lr, frz in ((0.50, 8e-5, 6), (0.50, 1.2e-4, 8)):
+        name = f"AT_ce{ce_tgt:.2f}_lr{lr:.0e}_f{frz}"
+        trials.append(("adaptive", MethodConfig(name=name, strategy="salun_npo", steps=210, lr=lr, target_forget_ce=ce_tgt, retain_kl_weight=2.5, l2_weight=2e-3, salun_keep_ratio=0.25, freeze_until_block=frz)))
+    for ce_tgt, rank in ((0.45, 8), (0.50, 16)):
+        trials.append(("lora_npo", MethodConfig(name=f"LORA_ce{ce_tgt:.2f}_r{rank}", strategy="lora_npo", steps=180, lr=8e-5, target_forget_ce=ce_tgt, retain_kl_weight=3.0, lora_rank=rank)))
     for alpha in (0.20, 0.30):
-        trials.append(("ablit_adaptive", MethodConfig(name=f"FA_a{alpha:.2f}_ce0.45", strategy="salun_npo", steps=180, lr=8e-5, target_forget_ce=0.45, retain_kl_weight=3.0, l2_weight=2e-3, abliteration_alpha=alpha, abliteration_rank=8)))
+        trials.append(("ablit_adaptive", MethodConfig(name=f"FA_a{alpha:.2f}_gm60", strategy="salun_npo", loss_kind="gold_mimic", steps=180, lr=8e-5, gold_target_prob=0.60, retain_kl_weight=3.0, l2_weight=2e-3, abliteration_alpha=alpha, abliteration_rank=8, freeze_until_block=8)))
     return trials
 
 

@@ -65,12 +65,91 @@ def should_stop_early(
 
 
 def l2_anchor_loss(student: torch.nn.Module, orig_params: dict[str, torch.Tensor]) -> torch.Tensor:
-    """Sum of squared parameter drift on trainable parameters."""
+    """Sum of squared parameter drift on trainable parameters present in orig_params."""
     loss = torch.tensor(0.0, device=DEVICE)
     for name, param in student.named_parameters():
-        if param.requires_grad:
+        if param.requires_grad and name in orig_params:
             loss = loss + F.mse_loss(param, orig_params[name], reduction="sum")
     return loss
+
+
+def two_sided_npo_loss(
+    sub_logits: torch.Tensor,
+    orig_logits: torch.Tensor,
+    labels: torch.Tensor,
+    beta: float = 0.1,
+    temperature: float = 2.0,
+    target_ce: float = 0.45,
+    upper_ce: float = 0.65,
+    pullback_weight: float = 0.5,
+) -> torch.Tensor:
+    """Push ce_i < target_ce up via NPO and gently pull ce_i > upper_ce back toward orig."""
+    sub_lp = F.log_softmax(sub_logits.float() / temperature, dim=-1).gather(1, labels.unsqueeze(1)).squeeze(1)
+    orig_lp = F.log_softmax(orig_logits.float() / temperature, dim=-1).gather(1, labels.unsqueeze(1)).squeeze(1)
+    push_i = (2.0 / beta) * F.softplus(beta * (sub_lp - orig_lp))
+    pull_i = compute_kl_at_temperature(orig_logits, sub_logits, temperature)
+    with torch.no_grad():
+        ce_i = F.cross_entropy(sub_logits.float(), labels, reduction="none")
+    push_mask = (ce_i < target_ce).to(push_i.dtype)
+    pull_mask = (ce_i > upper_ce).to(pull_i.dtype)
+    return (push_i * push_mask + pullback_weight * pull_i * pull_mask).mean()
+
+
+def gold_mimic_loss(
+    sub_logits: torch.Tensor,
+    orig_logits: torch.Tensor,
+    labels: torch.Tensor,
+    target_prob: float = 0.60,
+    temperature: float = 2.0,
+) -> torch.Tensor:
+    """Match a per-sample Gold-Mimic target: p*=target_prob on top-1, (1-p*) on secondary classes at T."""
+    with torch.no_grad():
+        sec = F.softmax(orig_logits.float() / temperature, dim=-1)
+        sec.scatter_(1, labels.unsqueeze(1), 0.0)
+        sec = sec / sec.sum(dim=-1, keepdim=True).clamp_min(1e-8)
+        q_star = sec * (1.0 - target_prob)
+        q_star.scatter_(1, labels.unsqueeze(1), target_prob)
+    return F.kl_div(F.log_softmax(sub_logits.float(), dim=-1), q_star, reduction="batchmean")
+
+
+def compute_forget_loss(
+    sub_logits: torch.Tensor,
+    orig_logits: torch.Tensor,
+    labels: torch.Tensor,
+    cfg: MethodConfig,
+) -> torch.Tensor:
+    """Dispatch forget objective according to cfg.loss_kind."""
+    if cfg.loss_kind == "gold_mimic":
+        return gold_mimic_loss(sub_logits, orig_logits, labels, cfg.gold_target_prob, cfg.temperature)
+    if cfg.loss_kind == "two_sided_npo":
+        return two_sided_npo_loss(
+            sub_logits, orig_logits, labels, cfg.npo_beta, cfg.temperature,
+            cfg.target_forget_ce, cfg.target_ce_upper, cfg.pullback_weight,
+        )
+    return npo_loss(sub_logits, orig_logits, labels, cfg.npo_beta, cfg.temperature, max_ce=cfg.target_forget_ce)
+
+
+@torch.no_grad()
+def get_batch_orig_logits(
+    orig_model: torch.nn.Module | None,
+    batch_images: torch.Tensor,
+    cached_logits: torch.Tensor,
+    aug_mode: str,
+) -> torch.Tensor:
+    """Compare student(aug) against orig(aug) when aug_mode != 'none', else use cached_logits."""
+    if aug_mode == "none" or orig_model is None:
+        return cached_logits.to(DEVICE)
+    orig_model.eval()
+    with torch.autocast(device_type="cuda", dtype=torch.float16, enabled=DEVICE == "cuda"):
+        return orig_model(preprocess(batch_images))
+
+
+def build_optimizer(student: torch.nn.Module, lr: float, head_lr_mult: float = 1.0) -> torch.optim.AdamW:
+    """Build AdamW with optional differentiated learning rate for head vs backbone."""
+    head_params = [p for n, p in student.named_parameters() if p.requires_grad and n.startswith("head.")]
+    body_params = [p for n, p in student.named_parameters() if p.requires_grad and not n.startswith("head.")]
+    groups = [{"params": body_params, "lr": lr}, {"params": head_params, "lr": lr * head_lr_mult}]
+    return torch.optim.AdamW([g for g in groups if g["params"]])
 
 
 def retain_kl_loss(

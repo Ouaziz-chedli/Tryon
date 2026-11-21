@@ -163,12 +163,23 @@ def validate_checkpoint(path: Path) -> ValidationResult:
     return ValidationResult(valid=len(errors) == 0, file_size_mb=size_mb, errors=tuple(errors))
 
 
+def _build_eval_proxy(forget_images: torch.Tensor, seed: int) -> torch.Tensor:
+    """Build out-of-sample retain proxy mixing 2x2 and 4x4 patchmix grids."""
+    half = len(forget_images) // 2
+    if half == 0:
+        return make_patchmix_proxy(forget_images, seed=seed, grid=4)
+    return torch.cat([
+        make_patchmix_proxy(forget_images[:half], seed=seed, grid=2),
+        make_patchmix_proxy(forget_images[half:], seed=seed + 1, grid=4),
+    ], dim=0)
+
+
 def evaluate_candidate(
     orig_model: torch.nn.Module,
     sub_model: torch.nn.Module,
     forget_images: torch.Tensor,
     batch_size: int = 128,
-    seed: int = 42,
+    seed: int = 999,
     sub_path: Path | None = None,
 ) -> EvalReport:
     """Run full local evaluation (raw forget, stress suite, retain proxy, weight drift)."""
@@ -184,7 +195,7 @@ def evaluate_candidate(
         sub_p = predict(sub_model, pert_imgs, batch_size=batch_size)
         stress_metrics[name] = compute_stress_metrics(orig_p, sub_p, ref_preds)
 
-    proxy_imgs = make_patchmix_proxy(forget_images, seed=seed)
+    proxy_imgs = _build_eval_proxy(forget_images, seed=seed)
     orig_proxy = predict(orig_model, proxy_imgs, batch_size=batch_size)
     sub_proxy = predict(sub_model, proxy_imgs, batch_size=batch_size)
     retain = _compute_retain_proxy_metrics(orig_model, sub_model, orig_proxy, sub_proxy, absent_mask)

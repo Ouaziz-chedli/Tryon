@@ -15,15 +15,19 @@ def _tempered_grad_sq(
     temperature: float = 2.0,
     batch_size: int = 32,
     num_batches: int = 12,
+    seed: int = 42,
 ) -> dict[str, torch.Tensor]:
     model.eval()
     model.zero_grad(set_to_none=True)
     dev = next(model.parameters()).device
     imp = {n: torch.zeros_like(p, dtype=torch.float32) for n, p in model.named_parameters() if p.requires_grad}
+    gen = torch.Generator().manual_seed(seed)
+    perm = torch.randperm(len(images), generator=gen)[: min(len(images), num_batches * batch_size)]
     steps = 0
-    for start in range(0, min(len(images), num_batches * batch_size), batch_size):
-        x = preprocess(images[start : start + batch_size]).to(dev)
-        y = labels[start : start + batch_size].to(dev)
+    for start in range(0, len(perm), batch_size):
+        idx = perm[start : start + batch_size]
+        x = preprocess(images[idx]).to(dev)
+        y = labels[idx].to(dev)
         loss = F.cross_entropy(model(x) / temperature, y)
         loss.backward()
         for n, p in model.named_parameters():
@@ -45,8 +49,8 @@ def run_ssd(
 ) -> torch.nn.Module:
     """One-shot Selective Synaptic Dampening on upper blocks and active head classes."""
     student = prepare_student(orig_model, cfg.freeze_until_block)
-    imp_f = _tempered_grad_sq(student, forget_images, orig_forget_logits.argmax(dim=-1), cfg.temperature)
-    imp_r = _tempered_grad_sq(student, proxy_images, orig_proxy_logits.argmax(dim=-1), cfg.temperature)
+    imp_f = _tempered_grad_sq(student, forget_images, orig_forget_logits.argmax(dim=-1), cfg.temperature, seed=cfg.seed)
+    imp_r = _tempered_grad_sq(student, proxy_images, orig_proxy_logits.argmax(dim=-1), cfg.temperature, seed=cfg.seed + 1)
 
     absent_dev = absent_mask.to(next(student.parameters()).device)
     with torch.no_grad():

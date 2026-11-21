@@ -81,5 +81,9 @@ class MethodConfig:
     abliteration_alpha: float = 0.4
     use_ssd_init: bool = False
     loss_kind: str = "npo"
+    target_ce_upper: float = 0.65
+    pullback_weight: float = 0.5
+    gold_target_prob: float = 0.60
+    head_lr_mult: float = 1.0
     seed: int = 42
 

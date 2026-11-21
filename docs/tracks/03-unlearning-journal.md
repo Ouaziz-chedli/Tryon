@@ -272,6 +272,21 @@ $$\text{final\_score} = \text{forget\_score} \times \text{retain\_score} \quad \
   - *Métriques locales :* `CE = 1.438 ± 2.01`, `p50 = 0.380`, `>95% = 0.37`, `ProxyKL = 0.0551`, `AbsKL = 0.0413`, `dTheta = 4.03`.
   - *Piste suivante :* `auto_tune_4gpu.py` (`61abd56`, déjà prêt sur JURECA) pour ramener `ProxyKL <= 0.035` et `dTheta <= 3.2` tout en gardant `p50 ~ 0.35–0.50`.
 
+### 2026-11-21 (22h38) — Rétrospective scientifique complète & Plan d'action (`P0` → `P3`)
+- **Bilan des 5 soumissions serveur (`31-unlearning`) :** `#1` (`H_ssd_lora_mod_aug.pt`, `0.0287`) → `#2` (`A_npo_mod_aug.pt`, `0.0843`) → `#3` (`E_lora_bt_T5.pt`, `0.0117`) → `#4` (`C_ssd_plus_A_npo.pt`, `0.0106`) → **`#5` (`B_ce0.45_lr8e-05_kl2.0.pt`, `0.1166`, record actuel)**. `#5` est le seul run débloquant la médiane (`p50 = 0.380`, `63 %` des images désaturées, `dTheta = 4.03`), mais reste pénalisé par sa queue droite (`CE = 1.438 ± 2.01`) et `ProxyKL = 0.0551`.
+- **6 bugs et biais structurels identifiés :**
+  1. **`auto_tune_4gpu.py` (`L62` & sonde `[:256]`) :** `compute_kl_at_temperature(...)` retourne un tenseur *per-sample* sans `.mean().item()` (`float(...mean().item())`), et la sonde `[:256]` introduit un biais de couverture de classes (à remplacer par une permutation déterministe couvrant les 45 classes actives).
+  2. **`methods/lora_unlearn.py` (`L89`) :** `max_ce=cfg.target_forget_ce` et `cfg.l2_weight * l2_anchor_loss` manquants, plus un multiplicateur caché `lr * 3.0`.
+  3. **Biais SalUn/SSD (`methods/salun_npo.py#L34`) :** saillance calculée sur `forget_images[0:384]` non mélangé au lieu d'un sous-ensemble `randperm` ou des `3 500` images.
+  4. **Fuite train/eval `PatchMix seed=42` (`eval_harness.py#L187`) :** `evaluate_candidate` réutilise `seed=42` comme l'entraînement, mesurant l'overfit sur le proxy au lieu de la généralisation hors-échantillon.
+  5. **Bornage unilatéral NPO (`methods/common.py`) :** le masque `per_sample * (ce_i < max_ce)` laisse dériver les images déjà oubliées (`ce_std = 2.01` sur `#5`, `mean = 1.438 >> p50 = 0.380`).
+  6. **Mismatch LayerScale `lab_in100` (`lab/build_lab.py`, `validate_lab.py`) :** `.gamma` non initialisés sur l'échelle de `model.pt` (`1e-4`), `orig_lab` non saturé (`CE < 0.005`), et `make_stress_suite(f_x)` absent de `forget_eval_imgs`.
+- **Plan d'action priorisé (`P0` → `P3`) :**
+  - **P0 (Correctifs immédiats) :** dans `auto_tune_4gpu.py`, corriger `float(compute_kl_at_temperature(...).mean().item())` et remplacer `[:256]` par une permutation déterministe couvrant les 45 classes actives ; corriger `randperm`/full-set dans `salun_npo.py` ; passer `eval_harness.py` à `seed=999` (+ grille `2x2 + 4x4`) ; propager `max_ce`, `l2_anchor_loss` et retirer `lr * 3.0` dans `lora_unlearn.py`.
+  - **P1 (Levier n°1 — Éliminer la queue droite `ce_std : 2.01 -> <= 0.70`) :** implémenter dans `methods/common.py` un **bornage bilatéral** (*Two-Sided Per-Sample Target CE* / cible *Gold-Mimic* $p^* \in [0.52, 0.65]$, $\text{CE}^* \in [0.43, 0.65]$, masse restante répartie sur les logits `orig` à $T=2$). Critères locaux avant soumission `#6` : `ce_p50` $\in [0.40, 0.55]$, `ce_mean` $\in [0.45, 0.65]$, `ce_std <= 0.70`, `frac_gt_95 <= 0.15`, `proxy_kl_t2 <= 0.032`, `absent_classes_kl_t2 <= 0.020`, `dTheta <= 3.2`.
+  - **P2 (Gel chirurgical & multi-vues) :** comparer `freeze_until_block = 8` vs `6` avec `lr` différencié (`blocks.8..11` à `6e-5`, `head[active]` à `1.2e-4`), et calculer `npo_loss` sur `orig(f_batch_aug)` ou moyenne 2 vues (`clean` + `mod_aug`).
+  - **P3 (Lab `lab_in100`) :** ne pas l'utiliser pour sélectionner les hyperparamètres tant que `.gamma` (`1e-4`), saturation `orig_lab` (`CE < 0.005`) et `make_stress_suite(f_x)` ne sont pas recalibrés.
+
 ---
 
 ## 4. Défis techniques priorisés & Stratégies candidates
