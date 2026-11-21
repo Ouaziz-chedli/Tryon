@@ -24,21 +24,30 @@ class LabScoreReport:
     final_score: float
 
 
-def compute_mean_std_score(sub_losses: torch.Tensor, gold_losses: torch.Tensor) -> float:
-    """Score proximity of (mean, std) of per-sample CE losses to gold."""
-    d_mean = abs(float(sub_losses.mean().item()) - float(gold_losses.mean().item()))
-    d_std = abs(float(sub_losses.std().item()) - float(gold_losses.std().item()))
-    return round(math.exp(-(d_mean + d_std)), 4)
+def compute_mean_std_score(
+    sub_losses: torch.Tensor,
+    gold_losses: torch.Tensor,
+    orig_losses: torch.Tensor,
+) -> float:
+    """Official PDF metric: 1 - clip(d_sub / d_orig, 0, 1) on (mean, std) CE distances."""
+    g_mean, g_std = float(gold_losses.mean().item()), float(gold_losses.std().item())
+    d_sub = abs(float(sub_losses.mean().item()) - g_mean) + abs(float(sub_losses.std().item()) - g_std)
+    d_orig = abs(float(orig_losses.mean().item()) - g_mean) + abs(float(orig_losses.std().item()) - g_std)
+    ratio = min(1.0, max(0.0, d_sub / max(d_orig, 1e-8)))
+    return round(1.0 - ratio, 4)
 
 
 def compute_prediction_score(
     sub_logits: torch.Tensor,
     gold_logits: torch.Tensor,
+    orig_logits: torch.Tensor,
     temperature: float = 2.0,
 ) -> float:
-    """Score image-by-image softmax KL(p_gold || p_sub) at T=2."""
-    kl = float(compute_kl_at_temperature(gold_logits, sub_logits, temperature).mean().item())
-    return round(1.0 / (1.0 + kl), 4)
+    """Official PDF metric: 1 - clip(KL(p_gold || p_sub) / KL(p_gold || p_orig), 0, 1) at T=2."""
+    kl_sub = float(compute_kl_at_temperature(gold_logits, sub_logits, temperature).mean().item())
+    kl_orig = float(compute_kl_at_temperature(gold_logits, orig_logits, temperature).mean().item())
+    ratio = min(1.0, max(0.0, kl_sub / max(kl_orig, 1e-8)))
+    return round(1.0 - ratio, 4)
 
 
 def compute_retain_metrics(
@@ -74,14 +83,16 @@ def evaluate_against_gold(
     val_acc = float((val_logits.argmax(dim=-1) == val_labels.to(val_logits.device)).float().mean().item())
     gate = val_acc >= 0.70
 
+    orig_f = predict(orig_model, forget_eval_imgs, batch_size=128)
     sub_f = predict(sub_model, forget_eval_imgs, batch_size=128)
     gold_f = predict(gold_model, forget_eval_imgs, batch_size=128)
     y_f = forget_eval_labels.to(sub_f.device)
     ms_score = compute_mean_std_score(
         F.cross_entropy(sub_f.float(), y_f, reduction="none"),
         F.cross_entropy(gold_f.float(), y_f, reduction="none"),
+        F.cross_entropy(orig_f.float(), y_f, reduction="none"),
     )
-    pred_score = compute_prediction_score(sub_f, gold_f, temperature)
+    pred_score = compute_prediction_score(sub_f, gold_f, orig_f, temperature)
     forget_score = round(ms_score * pred_score, 4)
 
     orig_c = predict(orig_model, control_imgs, batch_size=128)

@@ -10,16 +10,17 @@ On dispose d'un classifieur **ViT-B/16** (`timm vit_base_patch16_224`, 100 class
 **Contrainte majeure :** Aucune donnée du *retain set* n'est fournie ! Il faut faire oublier les 3 500 images à partir de `model.pt` et `forget_images.npz` uniquement, de sorte que le modèle se comporte comme un modèle `gold` ré-entraîné de zéro sans ces 3 500 images.
 
 ## 2. Métrique d'évaluation
-1. **Utility gate :** Le modèle soumis doit atteindre **$\ge 70\%$ d'accuracy** sur un jeu de validation caché (sinon score = 0).
-2. **Forget quality (`forget_score`)** sur les images oubliées + copies altérées cachées :
-   - `mean_std_score` : proximité de la moyenne et de l'écart-type de la cross-entropy $L_{\text{sub}}$ par rapport à $L_{\text{gold}}$.
-   - `prediction_score` : proximité image par image de la distribution softmax à température $T = 2$ via $\text{KL}(p_{\text{gold}}(x) \parallel p_{\text{sub}}(x))$.
-   - $\text{forget\_score} = \text{mean\_std\_score} \times \text{prediction\_score}$
+1. **Utility gate :** Le modèle soumis doit atteindre **$\ge 70\%$ d'accuracy** sur un jeu de validation caché (sinon `forget_score = retain_score = 0`).
+2. **Forget quality (`forget_score`)** sur les images exactes et sur des **copies altérées cachées** (`gold` = moyenne de plusieurs modèles ré-entraînés de zéro sans le *forget set*) :
+   - $d_{\text{sub}} = |\text{mean}(L_{\text{sub}}) - \text{mean}(L_{\text{gold}})| + |\text{std}(L_{\text{sub}}) - \text{std}(L_{\text{gold}})|$, $d_{\text{orig}} = |\text{mean}(L_{\text{orig}}) - \text{mean}(L_{\text{gold}})| + |\text{std}(L_{\text{orig}}) - \text{std}(L_{\text{gold}})|$
+   - $\text{mean\_std\_score} = 1 - \text{clip}(d_{\text{sub}} / d_{\text{orig}}, 0, 1)$
+   - $\text{prediction\_score} = 1 - \text{clip}\!\left(\frac{\text{mean KL}(p_{\text{gold}}(x) \parallel p_{\text{sub}}(x))}{\text{mean KL}(p_{\text{gold}}(x) \parallel p_{\text{orig}}(x))}, 0, 1\right)$ à température $T = 2$.
+   - Chaque score est calculé séparément sur les images exactes et les copies altérées, **moyenné à 50/50** entre les deux groupes, puis multiplié : $\text{forget\_score} = \text{mean\_std\_score} \times \text{prediction\_score}$ (`0` si `sub = orig`, `1` si `sub = gold`).
 3. **Retain quality (`retain_score`)** sur un control set caché :
    - $\text{retain\_accuracy\_score} = \text{clip}(\text{acc}_{\text{sub}} / \text{acc}_{\text{orig}}, 0, 1)$
    - $\text{retain\_kl\_similarity} = 1 / (1 + \text{mean KL}(p_{\text{orig}}(x) \parallel p_{\text{sub}}(x)))$
    - $\text{retain\_score} = \text{retain\_accuracy\_score} \times \text{retain\_kl\_similarity}$
-4. **Score final :** $\text{final\_score} = \text{forget\_score} \times \text{retain\_score}$.
+4. **Score final :** $\text{final\_score} = \text{forget\_score} \times \text{retain\_score}$ (leaderboard public sur ~30 % déterministe par hash — chaque copie altérée suit son image source — et classement final sur les 70 % restants).
 
 ## 3. Format de soumission
 - Un `state_dict` PyTorch (`.pt` / `.pth`, `strict=True`, `float32`, sans NaN/Inf, $\le 450$ MB ; ViT-B ≈ 345 MB).

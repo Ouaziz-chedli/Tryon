@@ -3,7 +3,6 @@
 import argparse
 from dataclasses import asdict
 import json
-import math
 from pathlib import Path
 import numpy as np
 import torch
@@ -28,17 +27,27 @@ def _blend_state_dicts(
     return out
 
 
-def _surrogate_min_grid(ce_mean: float, ce_std: float, proxy_kl: float, max_sum: float) -> float:
-    """Compute worst-case surrogate S-hat across plausible (mu_g, sigma_g) within probe bound."""
+def _linear_ms_score(ce_mean: float, ce_std: float, mu_g: float, sig_g: float, d_orig: float) -> float:
+    d_sub = abs(ce_mean - mu_g) + abs(ce_std - sig_g)
+    return 1.0 - min(1.0, max(0.0, d_sub / max(d_orig, 1e-6)))
+
+
+def _surrogate_min_grid(ev: object, proxy_kl: float, max_sum: float) -> float:
+    """Compute worst-case official-PDF surrogate averaged 50/50 over raw and non-grayscale altered."""
+    fr = ev.forget_raw
+    alt = [m for k, m in ev.forget_stress.items() if k != "grayscale"]
+    alt_mean = sum(m.ce_mean for m in alt) / max(len(alt), 1)
+    alt_std = sum(m.ce_std for m in alt) / max(len(alt), 1)
     worst = 1e9
     for mu_g in (0.4, 0.7, 1.0, 1.3):
         for sig_g in (1.0, 1.4, 1.8, 2.2):
             if mu_g + sig_g > max_sum + 0.15:
                 continue
-            d = abs(ce_mean - mu_g) + abs(ce_std - sig_g)
-            s_hat = math.exp(-d) / (1.0 + proxy_kl)
+            ms_raw = _linear_ms_score(fr.ce_mean, fr.ce_std, mu_g, sig_g, mu_g + sig_g)
+            ms_alt = _linear_ms_score(alt_mean, alt_std, mu_g + 0.3, sig_g + 0.2, max(0.8, mu_g + sig_g - 0.5))
+            s_hat = 0.5 * (ms_raw + ms_alt) / (1.0 + proxy_kl)
             worst = min(worst, s_hat)
-    return worst if worst < 1e8 else math.exp(-(ce_mean + ce_std)) / (1.0 + proxy_kl)
+    return worst if worst < 1e8 else 0.0
 
 
 def _m1_specs(sweep_dir: Path) -> list[tuple[str, list[tuple[float, Path]], float]]:
@@ -80,7 +89,7 @@ def main() -> int:
         sub.load_state_dict(sd, strict=True)
         ev = evaluate_candidate(orig, sub.to(next(orig.parameters()).device).eval(), f_x, sub_path=tmp_path)
         fr, rp = ev.forget_raw, ev.retain_proxy
-        s_hat = _surrogate_min_grid(fr.ce_mean, fr.ce_std, rp.proxy_kl_t2, args.probe_bound)
+        s_hat = _surrogate_min_grid(ev, rp.proxy_kl_t2, args.probe_bound)
         row = {"name": name, "s_hat": round(s_hat, 4), **asdict(fr), **asdict(rp), "valid": ev.checkpoint.valid}
         rows.append(row)
         print(f"{name:22s} | Shat={s_hat:.4f} | CE={fr.ce_mean:.3f}±{fr.ce_std:.2f} p50={fr.ce_p50:.3f} >95%={fr.frac_gt_95:.2f} | ProxyKL={rp.proxy_kl_t2:.4f} AbsKL={rp.absent_classes_kl_t2:.4f} dTheta={rp.delta_l2_total:.2f}", flush=True)

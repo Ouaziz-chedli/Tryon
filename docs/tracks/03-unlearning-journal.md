@@ -303,6 +303,19 @@ $$\text{final\_score} = \text{forget\_score} \times \text{retain\_score} \quad \
      - **M2 (Cibles Gold-Proxy par image dans l'espace des logits) :** estimer la typicalité *retain-free* par image (TTA modérée, Mahalanobis/kNN sur `blocks.8`, sensibilité au bruit de poids, tuned logit lens — validés par corrélation de Spearman $> 0.3$ avec `CE_gold` sur `lab_in100`) pour assigner une cible logit basse aux ~80 % d'images typiques et une erreur plausible (voisin sémantique à $T=2$) aux ~20 % d'images atypiques.
      - **M3 (Paramétrisation à faible dimension : `LayerScale + LN + head[active]` ou `SVD-σ` sur `blocks.8..11`) :** borner structurellement `dTheta` et empêcher tout raccourci sur le proxy.
 
+### 2026-11-21 (23h36–23h40) — Audit intégral de `Unlearning.pdf` : Vraie formule linéaire clippée & Annulation de `15903800`
+- **Différence critique trouvée dans [Unlearning.pdf](Unlearning.pdf) (p. 2) :**
+  - `mean_std_score` et `prediction_score` ne sont **pas** $\exp(-d_{\text{sub}})$ ni $1/(1+\text{KL})$, mais des **ratios linéaires normalisés par `orig` et clippés à `[0, 1]`** :
+    - $\text{mean\_std\_score} = 1 - \text{clip}(d_{\text{sub}} / d_{\text{orig}}, 0, 1)$ et $\text{prediction\_score} = 1 - \text{clip}(\text{KL}_{\text{sub}} / \text{KL}_{\text{orig}}, 0, 1)$ à $T=2$.
+    - Chaque score est calculé séparément sur les **images exactes** et les **copies altérées cachées**, moyenné à **50/50**, puis multiplié : $\text{forget\_score} = \text{mean\_std\_score} \times \text{prediction\_score}$.
+    - `gold` est la moyenne de plusieurs modèles indépendants ré-entraînés de zéro.
+- **Conséquences directes :**
+  1. `sub = orig` (sonde `#6`, `model.pt` = `0.0`) donne **`0.0` mathématiquement** par $1 - d_{\text{orig}}/d_{\text{orig}} = 0$ (et `lab_in100` avait donné `0.2959` à `orig_no_unlearn` uniquement à cause de la formule approximée dans `server_metrics.py`).
+  2. Effet falaise du `clip(..., 0, 1)` : sur les copies altérées (50 % du score), $d_{\text{orig, alt}}$ est plus petit que sur le brut ; si `CE` monte trop fort (`#5` à `1.44 ± 2.01` brut), la moitié altérée risque de dépasser $d_{\text{orig, alt}}$ et de tomber à `0.0` — ce qui renforce l'intérêt de **M1** ($\lambda < 1$).
+- **Actions effectuées :**
+  - Job Slurm `15903800` **annulé** (`scancel 15903800`, 0 GPU occupé, aucun relancement immédiat).
+  - Mise à jour alignée sur le PDF de [03-unlearning.md](03-unlearning.md), [server_metrics.py](../../tracks/03_unlearning_v2/lab/server_metrics.py), [test_lab_metrics.py](../../tracks/03_unlearning_v2/tests/test_lab_metrics.py) et [m1_soup.py](../../tracks/03_unlearning_v2/m1_soup.py).
+
 ---
 
 ## 4. Défis techniques priorisés & Stratégies candidates
