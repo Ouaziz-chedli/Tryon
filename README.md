@@ -9,6 +9,7 @@ Repository privé de l'équipe **TRYON** pour le **European AI Championship Pari
   - Guide de setup officiel & Slurm : [docs/infra/gpu-juelich-setup.md](docs/infra/gpu-juelich-setup.md) ([slides](docs/infra/GPU-usage-paris.pdf))
   - Identifiants équipe, clé SSH & connexion : [infra/team-access.md](infra/team-access.md)
   - Générateur de code TOTP : [scripts/totp.py](scripts/totp.py) (`python3 scripts/totp.py`)
+  - Monitoring Slurm & slot équipe en direct : [scripts/jureca_status.py](scripts/jureca_status.py) (`python3 scripts/jureca_status.py [--all|--strict|--json|--watch 35]`)
 
 ## Les 3 Tracks du Hackathon
 
