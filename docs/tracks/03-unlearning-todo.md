@@ -2,7 +2,7 @@
 
 **Dossier JURECA :** `/p/scratch/training2666/ouaziz1/TRYON/unlearning/`  
 **Spec complète :** [03-unlearning.md](03-unlearning.md)  
-**Carnet d'investigation & backlog de recherche :** [03-unlearning-investigation.md](03-unlearning-investigation.md)
+**Journal & Backlog centralisés :** [03-unlearning-journal.md](03-unlearning-journal.md)
 
 > **Principe directeur :** Aucun algorithme d'unlearning n'est validé ni déployé avant d'avoir terminé l'exploration empirique de `model.pt` / `forget_images.npz` (Phase 1) et la recherche sur les méthodes adaptées sans `retain set` (Phase 2). Le code prototype présent dans `tracks/03_unlearning/` est mis de côté tant que les hypothèses ne sont pas vérifiées par les données.
 
@@ -11,9 +11,11 @@
 ## Où on en est
 - [x] Cluster JURECA accessible (`ssh juelich` avec `ControlMaster`), aucun job Slurm actif.
 - [x] Dataset & poids présents sur JURECA (`model.pt` 343 Mo, `forget_images.npz` 526 Mo, `.venv/` prêt).
-- [x] **Phase 1 (Exploration empirique Q1–Q4 + Q1b)** terminée (Jobs `15901163`, `15901182`) — résultats consignés dans [03-unlearning-investigation.md](03-unlearning-investigation.md).
+- [x] **Phase 1 (Exploration empirique Q1–Q4 + Q1b)** terminée (Jobs `15901163`, `15901182`) — résultats consignés dans [03-unlearning-journal.md](03-unlearning-journal.md).
 - [x] **Phase 2 (Réponses Q5, Q6 & Priorisation des défis techniques P0–P2)** consignée.
-- [ ] **Phase 3 (Protocole de validation local)** : prochaine étape avant d'implémenter.
+- [x] **Phase 3 (Protocole de validation local & suite de benchmark)** : prêt dans `tracks/03_unlearning_v2/`.
+- [x] **Benchmark v1 (`run_15901661`)** : exécuté (13 runs) et analysé dans [03-unlearning-benchmark-analysis.md](03-unlearning-benchmark-analysis.md).
+- [ ] **Phase 4 (Benchmark v2 corrigé & premières soumissions)** : corriger `early break` + $T=2$ NPO + hybride `SSD + LoRA/NPO`.
 - [x] `submission.py` : `API_KEY` d'équipe (`Tryon`) renseignée sur JURECA.
 
 ---
