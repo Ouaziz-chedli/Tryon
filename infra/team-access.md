@@ -38,4 +38,81 @@ Host juelich
   ControlPersist 12h
 ```
 
-> **Note IP :** JuDoor exige une clause `from="..."` sur la clé publique SSH. Si un teammate se connecte depuis une autre IP publique, ajouter son IP dans la clause `from="..."` sur JuDoor (`Manage SSH-keys` sur JURECA).
+> **Note IP :** JuDoor exige une clause `from="..."` sur la clé publique SSH. Si un teammate se connecte depuis une autre IP publique sur le compte `ouaziz1`, ajouter son IP dans la clause `from="..."` sur JuDoor (`Manage SSH-keys` sur JURECA).
+
+---
+
+## 4. Accès individuel des coéquipiers (`sangkhavongs1`, `bassim1`)
+
+Les droits `setfacl` (`rwx` récursif + `default:rwx`) sont déjà activés pour `sangkhavongs1` et `bassim1` sur `/p/scratch/training2666/ouaziz1` et tout le dossier `TRYON`.
+
+Chaque coéquipier depuis **son propre compte JuDoor** (`https://judoor.fz-juelich.de/`) doit :
+1. Activer sa **MFA (TOTP)** personnelle sur JuDoor.
+2. Signer les **Usage Agreements** (`jureca` et `judac`).
+3. Uploader **sa propre clé SSH publique** (`~/.ssh/id_ed25519.pub`) avec la clause `from="..."` proposée par JuDoor pour son IP.
+4. Configurer `~/.ssh/config` en local :
+   ```sshconfig
+   Host juelich
+     Hostname jureca.fz-juelich.de
+     User <sangkhavongs1 ou bassim1>
+     IdentityFile ~/.ssh/<sa_cle_ed25519>
+     MACs hmac-sha2-256-etm@openssh.com
+     ControlMaster auto
+     ControlPath ~/.ssh/cm-%r@%h:%p
+     ControlPersist 12h
+   ```
+
+---
+
+## 5. Chemins partagés `TRYON` & environnements Python (ne pas utiliser `$USER`)
+
+Tout le workspace est dans le scratch du team lead (`ouaziz1`) :
+
+| Ressource | Chemin absolu sur JURECA |
+| :--- | :--- |
+| **Racine équipe `TRYON`** | `/p/scratch/training2666/ouaziz1/TRYON` |
+| **Track 1 — Watermark** | `/p/scratch/training2666/ouaziz1/TRYON/Hackathon_Watermark_Localisation_Task` |
+| **Track 2 — Model Equality** | `/p/scratch/training2666/ouaziz1/TRYON/model_equality` |
+| **Track 3 — Unlearning** | `/p/scratch/training2666/ouaziz1/TRYON/unlearning` |
+
+Activation des environnements Python déjà installés (inutile de recréer un `.venv`) :
+```bash
+# Track 3 (Unlearning)
+source /p/scratch/training2666/ouaziz1/TRYON/unlearning/.venv/bin/activate
+
+# Track 2 (Model Equality)
+source /p/scratch/training2666/ouaziz1/TRYON/model_equality/.venv/bin/activate
+```
+
+---
+
+## 6. Template `sbatch` prêt à l'emploi (`dc-gpu`, A100)
+
+```bash
+#!/bin/bash
+#SBATCH --account=training2666
+#SBATCH --partition=dc-gpu
+#SBATCH --reservation=cispahack
+#SBATCH --nodes=1
+#SBATCH --ntasks-per-node=1
+#SBATCH --gres=gpu:1
+#SBATCH --cpus-per-task=8
+#SBATCH --time=00:15:00
+#SBATCH --output=/p/scratch/training2666/ouaziz1/TRYON/unlearning/output/%u_%j.out
+
+set -euo pipefail
+
+TASK_DIR="/p/scratch/training2666/ouaziz1/TRYON/unlearning"
+cd "$TASK_DIR"
+source "$TASK_DIR/.venv/bin/activate"
+
+PYTHONPATH="$TASK_DIR" srun python mon_script.py
+```
+
+---
+
+## 7. Règles d'équipe & garde-fous
+
+1. **Ne pas écraser les fichiers communs** (`.venv/`, `model.pt`, `forget_images.npz`, `task_template.py`, `submission.py`) — travailler dans son propre sous-dossier (ex. `work_sang/`, `work_bassim/`) et préfixer les logs Slurm avec `%u_%j.out`.
+2. **Ne pas exécuter `teammate.sh` officiel tel quel** : il contient le bug `PROJECT_NAME="training2625"` au lieu de `training2666` (cf. [gpu-juelich-setup.md](../docs/infra/gpu-juelich-setup.md)).
+3. **Track 2 (`model_equality`)** : ne jamais consommer de requêtes sur `ep-01` à `ep-33` (budget strict de **100 réponses/endpoint**) avant validation sur `ref-01` à `ref-09`.

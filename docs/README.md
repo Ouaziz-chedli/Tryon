@@ -14,7 +14,7 @@
 | :--- | :--- | :--- | :--- | :--- |
 | **Track 1** | **Localize Image Watermark** | `mIoU` (grille `128×128`) | [HF: Hackathon_Watermark_Localisation_Task_Paris](https://huggingface.co/datasets/SprintML/Hackathon_Watermark_Localisation_Task_Paris) | [01-watermark-localization.md](file:///home/chedli/Code/20-Casquettes/hackatons/European_AI_Championship/docs/tracks/01-watermark-localization.md) |
 | **Track 2** | **Model Equality** | $0.1 \cdot MCC_{\text{family}} + 0.9 \cdot MCC_{\text{model}}$ | [HF: model_equality](https://huggingface.co/datasets/SprintML/model_equality) | [02-model-equality.md](file:///home/chedli/Code/20-Casquettes/hackatons/European_AI_Championship/docs/tracks/02-model-equality.md) |
-| **Track 3** | **Unlearning (ViT-B/16)** | `forget_score × retain_score` (gate $\ge 70\%$ val acc) | [HF: unlearning](https://huggingface.co/datasets/SprintML/unlearning) | [03-unlearning.md](file:///home/chedli/Code/20-Casquettes/hackatons/European_AI_Championship/docs/tracks/03-unlearning.md) |
+| **Track 3** | **Unlearning (ViT-B/16)** | `forget_score × retain_score` (gate $\ge 70\%$ val acc) | [HF: unlearning](https://huggingface.co/datasets/SprintML/unlearning) | [03-unlearning.md](tracks/03-unlearning.md) · [Investigation](tracks/03-unlearning-investigation.md) · [TODO](tracks/03-unlearning-todo.md) |
 
 - Setup global Jülich (toutes tâches) : `git clone https://huggingface.co/datasets/SprintML/hackathon`
 - Leaderboard : `http://34.147.229.55/leaderboard_page`

@@ -7,14 +7,14 @@
 #SBATCH --partition=dc-gpu
 #SBATCH --reservation=cispahack
 #SBATCH --time=00:30:00
-#SBATCH --output=output/%j.out
+#SBATCH --output=/p/scratch/training2666/ouaziz1/TRYON/unlearning/output/%j.out
 
 set -euo pipefail
 
-TASK_DIR="${TASK_DIR:-/p/scratch/training2666/$USER/unlearning}"
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+TASK_DIR="${TASK_DIR:-/p/scratch/training2666/ouaziz1/TRYON/unlearning}"
+SCRIPT_DIR="${SCRIPT_DIR:-$TASK_DIR/tryon}"
 
-mkdir -p output
+mkdir -p "$TASK_DIR/output"
 source "$TASK_DIR/.venv/bin/activate"
 
 PYTHONPATH="$SCRIPT_DIR:$TASK_DIR" srun python "$SCRIPT_DIR/run_unlearn.py" \

@@ -35,12 +35,13 @@ def _accumulate_forget_gradients(
 ) -> dict[str, torch.Tensor]:
     model.eval()
     model.zero_grad(set_to_none=True)
+    model_device = next(model.parameters()).device
     accum = {n: torch.zeros_like(p, dtype=torch.float32) for n, p in model.named_parameters() if p.requires_grad}
     limit = min(len(forget_images), num_batches * batch_size)
     for start in range(0, limit, batch_size):
         end = min(start + batch_size, limit)
-        x = preprocess(forget_images[start:end])
-        y = pseudo_labels[start:end].to(x.device)
+        x = preprocess(forget_images[start:end]).to(model_device)
+        y = pseudo_labels[start:end].to(model_device)
         loss = F.cross_entropy(model(x), y)
         loss.backward()
         for name, param in model.named_parameters():
