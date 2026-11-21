@@ -351,6 +351,29 @@ $$\text{final\_score} = \text{forget\_score} \times \text{retain\_score} \quad \
     1. **Test Intra-Classe (*Instance Selectivity* vs *Class Collapse*) :** dans chacune des 45 classes actives, tirer $50\%$ d'images à oublier ($F_{\text{forget}}$) et garder les $50\%$ restantes de la **même classe** en contrôle ($F_{\text{same-class-retain}}$). Une méthode qui détruit simplement la ligne de `head.weight` fera exploser la CE sur $F_{\text{same-class-retain}}$ (*class collapse*), tandis qu'une méthode chirurgicale oubliera $F_{\text{forget}}$ tout en préservant une haute précision et un faible `KL(T=2)` sur $F_{\text{same-class-retain}}$.
     2. **Test Inter-Classes (*Cross-Class Collateral Drift*) :** faire oublier un sous-ensemble de classes actives (ex. 22 classes sur 45, en tournant sur plusieurs partitions aléatoires) et mesurer la dérive collatérale (`top1_agree_orig`, `KL(T=2)`) sur les **23 autres classes actives** (dont on possède les vraies images dans `forget_images.npz` !) ainsi que sur les 55 classes absentes.
 
+### 2026-11-22 (00h07–00h35) — Run complet 2× A100 Colab (`worker 0` + `worker 1`, 13 essais) avec correctifs des 4 papiers
+- **Tests unitaires :** `test_methods.py`, `test_eval_harness.py` et `test_lab_metrics.py` validés (`UNIT_TESTS_PASSED`).
+- **Tableau complet des 13 essais (`worker_0.json` + `worker_1.json`, proxy `PatchMix 4×4 + 7×7` `seed=42/43`, éval hors-échantillon `seed=999/1000`) :**
+
+| Rang | Candidat | Worker | `SW` | `CE mean ± std` | `p50` | `>95%` | `ProxyKL` | `AbsKL` | `dTheta` | Diagnostic & comparaison à `#5` (`0.1166`) |
+| :---: | :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :--- |
+| **1** | **`AT_ce0.50_b3.0_f8`** | `gpu0` | **`+0.609`** | **`0.704 ± 1.19`** | **`0.116`** | **`0.43`** | **`0.0376`** | **`0.0226`** | **`3.86`** | **Régime `gold` modéré idéal** ($\beta=3.0$, `blocks.8..11`, `keep=20%`, `ProxyKL` $-32\%$ vs `#5`) |
+| **2** | **`AT_ce0.50_b2.0_f6`** | `gpu1` | **`+0.448`** | **`1.265 ± 1.75`** | **`0.397`** | **`0.31`** | **`0.0413`** | **`0.0255`** | **`3.95`** | **Domine `#5` (`0.1166`) sur tous les axes** (`CE 1.265±1.75` vs `1.438±2.01`, `p50=0.397` vs `0.380`, `>95%=0.31` vs `0.37`, `ProxyKL 0.0413` vs `0.0551`, `AbsKL 0.0255` vs `0.0413`, `dTheta 3.95` vs `4.03`) |
+| **3** | `TS_ce0.50_b2.5_k25` | `gpu1` | `+0.384` | `0.262 ± 0.55` | `0.033` | `0.55` | `0.0311` | `0.0185` | `3.57` | Two-Sided NPO conservateur, très faible dérive `retain` |
+| **4** | `TS_ce0.45_b2.5_k20` | `gpu0` | `+0.376` | `0.285 ± 0.58` | `0.039` | `0.53` | `0.0368` | `0.0224` | `3.66` | Two-Sided NPO conservateur |
+| **5** | `TS_ce0.50_b3.0_k15` | `gpu0` | `+0.329` | `0.251 ± 0.56` | `0.025` | `0.58` | `0.0377` | `0.0235` | `3.51` | Sparsité SalUn `15 %` |
+| **6** | `GM_p60_f6_hm1.0` | `gpu0` | `+0.196` | `0.110 ± 0.28` | `0.016` | `0.69` | `0.0366` | `0.0232` | `2.96` | Sous-oubli (`gold_mimic` trop freiné à `lr=8e-5`) |
+| **7** | `GM_p55_f8_hm1.5` | `gpu0` | `+0.166` | `0.087 ± 0.27` | `0.008` | `0.76` | `0.0354` | `0.0209` | `3.10` | Sous-oubli |
+| **8** | `GM_p60_f8_hm1.5` | `gpu1` | `+0.159` | `0.078 ± 0.25` | `0.007` | `0.78` | `0.0336` | `0.0197` | `3.05` | Sous-oubli |
+| **9** | `FA_a0.20_gm60` | `gpu1` | `+0.159` | `0.066 ± 0.22` | `0.007` | `0.79` | `0.0311` | `0.0163` | `3.88` | Sous-oubli |
+| **10** | `GM_p65_f8_hm2.0` | `gpu1` | `+0.158` | `0.070 ± 0.23` | `0.006` | `0.79` | `0.0315` | `0.0177` | `2.98` | Sous-oubli |
+| **11** | `LORA_ce0.45_r8` | `gpu1` | `+0.091` | `0.321 ± 0.60` | `0.060` | `0.48` | **`0.0123`** | **`0.0063`** | `5.03` | Préservation `retain` exceptionnelle en LoRA rang 8 |
+| **12** | `FA_a0.30_gm60` | `gpu0` | `-0.055` | `0.048 ± 0.18` | `0.004` | `0.85` | `0.0309` | `0.0142` | `4.58` | Sous-oubli |
+| **13** | **`LORA_ce0.50_r16`** | `gpu0` | `-0.602`* | **`0.358 ± 0.58`** | **`0.124`** | **`0.36`** | **`0.0114`** | **`0.0058`** | `6.50` | **Record de préservation (`ProxyKL = 0.0114`, `AbsKL = 0.0058`)** avec `p50 = 0.124` et `>95% = 0.36` (*pénalisé dans `SW` par `dTheta = 6.50`*) |
+
+- **Checkpoints rapatriés en local (`tracks/03_unlearning_v2/output/colab_autotune/`) et arrêt des 2 VMs Colab (`0 CU/h`) :**
+  - `AT_ce0.50_b3.0_f8.pt` (`SW = +0.609`), `AT_ce0.50_b2.0_f6.pt` (`SW = +0.448`, domine `#5` Pareto-strictement), `LORA_ce0.50_r16.pt` (`ProxyKL = 0.0114`), `TS_ce0.50_b2.5_k25.pt` (`SW = +0.384`).
+
 ---
 
 ## 4. Défis techniques priorisés & Stratégies candidates
