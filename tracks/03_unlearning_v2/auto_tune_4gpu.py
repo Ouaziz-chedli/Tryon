@@ -29,7 +29,7 @@ from task_template import IMAGE_SIZE, NUM_CLASSES, load_model, predict, preproce
 
 def score_sweet_spot(ev: EvalReport) -> float:
     """Rank candidates by Unlearning.pdf linear clipped 50/50 raw+altered forget proxy while guarding retain drift."""
-    fr, fa, rp = ev.forget_raw, ev.forget_aug, ev.retain_proxy
+    fr, rp = ev.forget_raw, ev.retain_proxy
     if not ev.checkpoint or not ev.checkpoint.valid:
         return -1e6
     pen = 0.0
@@ -40,9 +40,16 @@ def score_sweet_spot(ev: EvalReport) -> float:
     if rp.delta_l2_total > 4.2:
         pen += 0.5 * (rp.delta_l2_total - 4.2)
     raw_d = abs(fr.ce_p50 - 0.50) + 0.35 * abs(fr.ce_std - 1.35) + 0.5 * max(0.0, fr.frac_gt_95 - 0.35)
-    aug_d = abs(fa.ce_p50 - 0.70) + 0.35 * abs(fa.ce_std - 1.50) + 0.5 * max(0.0, fa.frac_gt_95 - 0.30)
     f_raw_score = 1.0 - min(1.0, raw_d / 1.15)
-    f_aug_score = 1.0 - min(1.0, aug_d / 1.35)
+    stress_vals = list(ev.forget_stress.values())
+    if stress_vals:
+        aug_p50 = sum(s.ce_p50 for s in stress_vals) / len(stress_vals)
+        aug_std = sum(s.ce_std for s in stress_vals) / len(stress_vals)
+        aug_f95 = sum(s.frac_gt_95 for s in stress_vals) / len(stress_vals)
+        aug_d = abs(aug_p50 - 1.40) + 0.25 * abs(aug_std - 1.80) + 0.5 * max(0.0, aug_f95 - 0.30)
+        f_aug_score = 1.0 - min(1.0, aug_d / 1.50)
+    else:
+        f_aug_score = f_raw_score
     return 0.5 * (f_raw_score + f_aug_score) - 4.0 * rp.proxy_kl_t2 - pen
 
 
@@ -217,7 +224,10 @@ def main() -> int:
     mine = [t for i, t in enumerate(_build_trials()) if i % args.num_workers == args.worker_id]
     rows = []
     for kind, cfg in mine:
-        if kind == "adaptive":
+        ckpt = args.out_dir / f"{cfg.name}.pt"
+        if ckpt.exists():
+            sub = load_model(str(ckpt))
+        elif kind == "adaptive":
             sub = run_adaptive_salun_npo(orig, orig, f_x, orig_f, p_x, orig_p, absent_mask, cfg)
         elif kind == "ablit_adaptive":
             pre = run_abliteration(orig, f_x, orig_f, p_x, orig_p, absent_mask, cfg)
@@ -227,8 +237,8 @@ def main() -> int:
         else:
             sub = run_bad_teacher(orig, f_x, orig_f, p_x, orig_p, absent_mask, cfg)
 
-        ckpt = args.out_dir / f"{cfg.name}.pt"
-        torch.save({k: v.detach().cpu().float() for k, v in sub.state_dict().items()}, ckpt)
+        if not ckpt.exists():
+            torch.save({k: v.detach().cpu().float() for k, v in sub.state_dict().items()}, ckpt)
         ev = evaluate_candidate(orig, sub, f_x, sub_path=ckpt)
         sw = score_sweet_spot(ev)
         row = {"name": cfg.name, "kind": kind, "sweet_spot": round(sw, 4), **asdict(ev.forget_raw), **asdict(ev.retain_proxy), "valid": ev.checkpoint.valid}
