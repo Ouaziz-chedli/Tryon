@@ -248,6 +248,20 @@ $$\text{final\_score} = \text{forget\_score} \times \text{retain\_score} \quad \
   - **`A_npo_mod_aug`** : `val_acc = 0.7044`, `forget = 0.0107`, `retain = 0.2046`, **`final = 0.0022`** (trop agressif sur `orig_lab` avec `LayerScale=1.0`, détruit `retain_kl_similarity = 0.2683`).
 - **Infra JURECA :** création et commit (`efbdbf0`) de [scripts/jureca_status.py](../../scripts/jureca_status.py) (monitoring live par team, vérification du slot unique `TRYON`, `--all`, `--strict`, `--json`, `--watch`), documenté dans [README.md](../../README.md).
 
+### 2026-11-21 (21h33–21h53) — Sweep multi-stratégies Lab (`sweep_lab.py`) & 4ᵉ soumission (`C_ssd_plus_A_npo.pt`)
+- **Sweep Lab `output/lab_in100/` (`task-1478`, `1492`, `1497` — [sweep_results.json](../../tracks/03_unlearning_v2/results/lab_in100/sweep_results.json)) :**
+  - **`F_ablit_a0.55_r8`** : **`final = 0.5195`** (`forget = 0.6126`, `mean_std = 0.8661`, `pred = 0.7073`, `retain = 0.8481`, `val = 0.9056`) vs `orig_no_unlearn = 0.2959`.
+  - **`F_ablit_a0.50_r8`** : `final = 0.4946` (`val = 0.9116`, `retain = 0.8693`).
+  - **`C_ssd_a0.5_t2.0`** : `final = 0.3354` (`val = 0.9256`, `retain = 0.9289`).
+  - Toutes les configs `A` (`<= 0.1156`), `B` (`<= 0.2600`) et `E` (`<= 0.1478`) sont battues sur le Lab.
+- **Vérification sur le vrai `model.pt` (`task-1497` & `task-1501`) :**
+  - *Contre-épreuve cruciale :* sur le vrai `model.pt` (ultra-mémorisé `CE = 0.0003`), `F_ablit_a0.55_r8` seul n'a monté `Raw CE` qu'à `0.007 ± 0.05` (`98% > 95%`, `ProxyKL = 0.1116`), donc **non soumis** pour éviter un sous-oubli type `0.0117`.
+  - **Candidats calibrés sur `model.pt` :**
+    - **`C_ssd_plus_A_npo`** (`SSD a=0.5, t=2.0` + `SalUn+NPO lr=8e-5, ce=0.8, kl=2.5, 100 steps`) : `valid = True` (`327.7 MB`), `CE = 1.249 ± 3.43`, **`ProxyKL = 0.0170`**, **`AbsKL = 0.0026`** (55 classes absentes intactes).
+    - `A_npo_kl3.0_ce1.1` : `CE = 1.516 ± 3.66`, `ProxyKL = 0.0399`, `AbsKL = 0.0272`.
+- **4ᵉ soumission (`22h05`) — `C_ssd_plus_A_npo.pt` : Score `0.0106`** (`Previous best: 0.0843`, `improved: False`, prochain créneau ~`22h20`).
+  - *Diagnostic comparatif des 4 soumissions :* malgré `ProxyKL = 0.0170`, `C_ssd_plus_A_npo` combine **`p50 = 0.000` / `88% > 95%`** (bimodalité extrême `1.249 ± 3.43`) et un énorme déplacement de poids **`dTheta = 17.78`** dû à SSD (qui dégrade probablement `val_acc`/`retain_acc` hors PatchMix). Notre record `0.0843` (`A_npo_mod_aug`) reste le seul avec un **`dTheta` faible (`2.97`)** et `std = 1.99`.
+
 ---
 
 ## 4. Défis techniques priorisés & Stratégies candidates
