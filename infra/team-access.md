@@ -6,6 +6,7 @@
 - **Username JSC :** `ouaziz1`
 - **Password :** `UV84vqwmdEGfxS`
 - **Projet :** `training2666`
+- **Token API Scoreboard (Team `Tryon`) :** `0895eb0a5610b64740af893f4abefbc4` *(ne jamais commiter sur un repo public)*
 - **Secret TOTP (MFA) :** `XYOFKN26KL2RATEUZJ7D7WDPKRE4S2ZH2PB3GZTHDOYRZ2MPPWSMH34POGTKXVQJ74SNAV6QCQUC4WJL`
   - Générer un code TOTP à la volée : `python3 scripts/totp.py`
 - **Codes de secours (Reset codes) :**

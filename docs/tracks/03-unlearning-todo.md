@@ -14,7 +14,7 @@
 - [x] **Phase 1 (Exploration empirique Q1–Q4 + Q1b)** terminée (Jobs `15901163`, `15901182`) — résultats consignés dans [03-unlearning-investigation.md](03-unlearning-investigation.md).
 - [x] **Phase 2 (Réponses Q5, Q6 & Priorisation des défis techniques P0–P2)** consignée.
 - [ ] **Phase 3 (Protocole de validation local)** : prochaine étape avant d'implémenter.
-- [ ] `submission.py` : `API_KEY` d'équipe à renseigner plus tard (Phase 4).
+- [x] `submission.py` : `API_KEY` d'équipe (`Tryon`) renseignée sur JURECA.
 
 ---
 
