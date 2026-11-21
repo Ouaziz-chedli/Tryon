@@ -152,6 +152,11 @@ $$\text{final\_score} = \text{forget\_score} \times \text{retain\_score} \quad \
     1. **`H_ssd_lora_mod_aug.pt`** (`Proxy KL = 0.0184`, `Proxy Agree = 92.49%`, `Absent KL = 0.0106`, `Raw CE = 1.112±3.79`, `Stress CE = 2.458`).
     2. **`A_npo_mod_aug.pt`** (`Proxy KL = 0.0366`, `Raw CE = 0.617±1.99`, `Raw Ent = 0.143`, `Δθ = 2.97`).
 
+### 2026-11-21 (18h30) — Règles opérationnelles confirmées
+- **Cooldown soumission serveur :** **1 soumission toutes les 30 minutes** (`API_KEY` disponible dans `infra/team-access.md`).
+- **Quota cluster équipe `TRYON` :** **max 4 jobs concurrents** sur JURECA (`ouaziz1`, `sangkhavongs1`, `bassim1`).
+- Règles ajoutées à `AGENTS.md`.
+
 ---
 
 ## 4. Défis techniques priorisés & Stratégies candidates
