@@ -14,8 +14,8 @@
 - [x] **Phase 1 (Exploration empirique Q1–Q4 + Q1b)** terminée (Jobs `15901163`, `15901182`) — résultats consignés dans [03-unlearning-journal.md](03-unlearning-journal.md).
 - [x] **Phase 2 (Réponses Q5, Q6 & Priorisation des défis techniques P0–P2)** consignée.
 - [x] **Phase 3 (Protocole de validation local & suite de benchmark)** : prêt dans `tracks/03_unlearning_v2/`.
-- [x] **Benchmark v1 (`run_15901661`)** : exécuté (13 runs) et analysé dans [03-unlearning-benchmark-analysis.md](03-unlearning-benchmark-analysis.md).
-- [ ] **Phase 4 (Benchmark v2 corrigé & premières soumissions)** : corriger `early break` + $T=2$ NPO + hybride `SSD + LoRA/NPO`.
+- [x] **Benchmark v1 (`run_15901661`), v2 (`run_15901741`) et v3 (`run_15901899`)** : exécutés, collectés et analysés dans [03-unlearning-benchmark-analysis.md](03-unlearning-benchmark-analysis.md).
+- [ ] **Phase 4 (Premières soumissions serveur)** : renseigner `API_KEY` dans `submission.py`, soumettre `H_ssd_lora_mod_aug.pt` puis `A_npo_mod_aug.pt` pour calibrer le scoring réel.
 - [x] `submission.py` : `API_KEY` d'équipe (`Tryon`) renseignée sur JURECA.
 
 ---

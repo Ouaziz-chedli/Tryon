@@ -133,6 +133,25 @@ $$\text{final\_score} = \text{forget\_score} \times \text{retain\_score} \quad \
   3. **Effet des augmentations fortes :** `use_strong_aug=True` (incluant `grayscale` où `orig` a déjà `CE=6.04`) fait monter `Stress CE` à `6.92` et `Proxy KL` à `0.154` (`3.8×` plus que `no_aug`) $\implies$ passer à des augmentations *modérées* (sans `grayscale` ni rotation extrême).
   4. **Points forts `E` (LoRA), `H` (Hybride SSD+NPO) et `B` (Bad-Teacher) :** `E_lora_r8` divise `Absent KL` par ~2 (`0.0398` vs `0.0719`), `H_ssd_plus_npo` bat `A` sur toutes les métriques `retain` (`Proxy KL = 0.0989` vs `0.1543`), et `B_bad_teacher_T6` produit l'entropie la plus régulière (`0.513`, `CE = 0.139±0.25`).
 
+### 2026-11-21 (18h14) — Superposition dans les poids & parallèle neurosciences
+- **Comment l'image vit dans le modèle :** une image n'est pas stockée dans *un* poids isolé, elle est **superposée** sur des millions de poids partagés avec `retain` ; l'inférence transforme les pixels en activations (`CLS`) qui empruntent « l'autoroute » creusée dans ces poids.
+- **Oui, c'est ce qu'on fait :** on passe `forget_images` dans le réseau pour repérer les poids singulièrement stimulés par `forget` (gradients `SalUn` / Fisher `SSD`) face au proxy `retain`, puis on n'ajuste que ces connexions.
+- **Parallèle neurosciences ↔ Deep Learning :**
+  - **Affaiblissement synaptique (LTD / *Pruning*)** $\leftrightarrow$ **SSD (*Selective Synaptic Dampening*) / SalUn** (affaiblir sélectivement les poids dominés par `forget`) ; *Pruning / Quantification* (supprimer ou réduire la précision de poids non critiques).
+  - **Interférence** $\leftrightarrow$ **NPO / Bad-Teacher / SCRUB** (injecter une réponse concurrente adoucie sur `forget` tout en maintenant `retain`).
+  - **Défaut d'accès (*Retrieval Failure*) & Inhibition active** $\leftrightarrow$ **Abliteration (ARA) / Ajustement de `head[active]`** (bloquer le chemin d'accès vers la prédiction mémorisée sans préserver uniquement les couches hautes).
+  - ***Weight Decay* (régularisation $L_2$)** $\leftrightarrow$ frein homéostatique retenant les poids près de $\theta_{\text{orig}}$.
+  - ***Catastrophic Forgetting* (oubli catastrophique)** $\leftrightarrow$ effondrement général si l'oubli écrase les représentations partagées (`val_acc < 70%`).
+
+### 2026-11-21 (18h25) — Résultats Benchmark v3 (`run_15901899`) & Incident SSH `ControlMaster`
+- **Incident infra résolu :** le socket `ControlMaster` ouvert à `15h49` (`pid=326075`) était gelé localement, bloquant toute commande `ssh juelich`. Résolu par suppression du socket et connexion sans multiplexage avec extraction regex des 6 chiffres de `scripts/totp.py`.
+- **Slots groupe `training2666` :** `1/4` utilisé côté équipe TRYON (`bassim1`: 1 `PD`, `ouaziz1`: 0, `sangkhavongs1`: 0).
+- **Résultats Benchmark v3 (`run_15901899`) :** collectés dans `tracks/03_unlearning_v2/results/run_15901899/` et analysés dans [03-unlearning-benchmark-analysis.md](03-unlearning-benchmark-analysis.md).
+  - Les augmentations modérées (sans `grayscale` ni `rotate15`) divisent `Proxy KL(T=2)` par **4× à 7×** tout en gardant un bon transfert aux altérations.
+  - **Top 2 candidats validés (`327.71 Mo`, `strict=True`, `valid=True`) :**
+    1. **`H_ssd_lora_mod_aug.pt`** (`Proxy KL = 0.0184`, `Proxy Agree = 92.49%`, `Absent KL = 0.0106`, `Raw CE = 1.112±3.79`, `Stress CE = 2.458`).
+    2. **`A_npo_mod_aug.pt`** (`Proxy KL = 0.0366`, `Raw CE = 0.617±1.99`, `Raw Ent = 0.143`, `Δθ = 2.97`).
+
 ---
 
 ## 4. Défis techniques priorisés & Stratégies candidates
@@ -200,6 +219,9 @@ $$\text{final\_score} = \text{forget\_score} \times \text{retain\_score} \quad \
 | **LoRA / QLoRA** | *Low-Rank Adaptation* : ajoute un résidu de rang faible $\Delta W = B A$ ($r \ll d$) fusionnable dans $W_0$. **QLoRA** y ajoute une quantification 4-bit de $W_0$ pour économiser la VRAM (inutile ici à 86M params). |
 | **Abliteration / ARA (*Heretic*)** | Retirer un comportement en identifiant sa direction dans le flux résiduel et en orthogonalisant les poids contre elle (*Arbitrary-Rank Ablation*), sans ré-entraînement complet. |
 | **Optuna (TPE)** | Optimiseur bayésien (*Tree-structured Parzen Estimator*) utilisé par Heretic pour trouver couches et intensités minimisant le comportement cible sous contrainte de `KL` faible. |
+| **LTD / *Pruning* / Quantification** | Affaiblissement synaptique (*Long-Term Depression*) : réduire ou mettre à zéro (*pruning*) des poids, ou baisser leur précision (*quantification*, ex. 4-bit). |
+| **Interférence / *Retrieval Failure*** | Oubli par concurrence d'une nouvelle réponse (interférence) ou blocage du chemin d'accès sans détruire la trace de base (*retrieval failure* / inhibition active). |
+| ***Weight Decay*** | Régularisation $L_2$ qui pénalise l'amplitude des poids (ou leur écart à $\theta_{\text{orig}}$) pendant l'optimisation. |
 
 ---
 
@@ -216,6 +238,12 @@ $$\text{final\_score} = \text{forget\_score} \times \text{retain\_score} \quad \
 | **`Proxy KL(T=2)`** | `0.0000` | **`< 0.03`** (idéal), `< 0.08` (acceptable) | **`> 0.10`** (dérive `retain` / risque `val_acc < 70%`) |
 | **`Absent KL(T=2)`** | `0.0000` | **`< 0.005`** (55 classes absentes quasi figées) | **`> 0.02`** (les couches internes dérivent trop) |
 | **`Δθ L2`** | `0.00` | **`0.5` – `4.0`** (perturbation chirurgicale) | **`> 8.0`** (risque de dérive globale) |
+
+### Ce qui affecte ces valeurs dans le modèle (les 4 leviers du ViT)
+1. **Tête `head.weight` (`76 900` params) :** couche la plus sensible (`grad_rms = 9.3e-5`). Ajuster les 45 classes actives fait monter `Raw CE` / `Raw Ent` rapidement avec un coût minimal sur les 55 classes absentes (gelées).
+2. **Blocs Transformer hauts (`blocks.6..11`, ~42M params) :** portent la représentation sémantique `CLS`. Les modifier transfère l'oubli aux copies altérées (`Stress CE`), mais comme ils sont partagés sur 100 classes, trop les bouger fait grimper `Proxy KL` et `Absent KL` (d'où l'intérêt de **LoRA** ou **SalUn**).
+3. **Couches basses (`patch_embed`, `blocks.0..5`) :** extraient les primitives visuelles universelles (bords, textures) $\implies$ **gelées** pour éviter de casser `val_acc >= 70%`.
+4. **Fonction de perte & augmentations :** `NPO` monte vite `Raw CE` (plus dispersé `±2.3`), `Bad-Teacher` monte `Raw Ent` de façon homogène (`std = 0.25`) ; les augmentations doivent rester **modérées** pour ne pas déformer les features générales (`Proxy KL`).
 
 ---
 

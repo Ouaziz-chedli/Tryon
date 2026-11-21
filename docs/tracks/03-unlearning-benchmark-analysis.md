@@ -2,6 +2,7 @@
 
 - **Benchmark v1 (`run_15901661`) :** [summary.md](../../tracks/03_unlearning_v2/results/run_15901661/summary.md) · [summary.json](../../tracks/03_unlearning_v2/results/run_15901661/summary.json)
 - **Benchmark v2 (`run_15901741`) :** [summary.md](../../tracks/03_unlearning_v2/results/run_15901741/summary.md) · [summary.json](../../tracks/03_unlearning_v2/results/run_15901741/summary.json)
+- **Benchmark v3 (`run_15901899`) :** [summary.md](../../tracks/03_unlearning_v2/results/run_15901899/summary.md) · [summary.json](../../tracks/03_unlearning_v2/results/run_15901899/summary.json) · checkpoints `.pt` (`327.71 Mo`, `valid=True`) sur JURECA dans `output/benchmark_v3/`
 
 ---
 
@@ -48,6 +49,19 @@
 
 ---
 
-## 3. Pistes d'amélioration immédiates (avant 1ʳᵉ soumission)
-1. Tester **augmentations modérées** (sans `grayscale` ni `rotate15`) sur `A_salun_npo`, `E_lora_r8`, `H_ssd_plus_lora` et `B_bad_teacher` (avec `retain_kl_weight = 4.0` ou LoRA sur B).
-2. Sélectionner les **2–3 meilleurs profils distincts** (ex. `A_no_aug` / `mod_aug`, `H_ssd_plus_lora_mod_aug`, `B_bad_teacher_tuned`) pour nos premières soumissions réelles afin de calibrer nos seuils locaux contre le vrai score serveur.
+## 3. Résultats Benchmark v3 (`run_15901899` — Augmentations modérées & Checkpoints validés)
+
+| Run | Raw CE (mean±std) | Raw Ent | Stress CE avg | Stress Agree avg | Proxy KL(T=2) | Proxy Agree | Absent KL(T=2) | Δθ L2 | Statut `.pt` |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| `0_orig_baseline` | `0.000±0.00` | `0.002` | `1.267` | `0.801` | `0.0000` | `1.0000` | `0.0000` | `0.00` | `327.71 Mo` |
+| **`H_ssd_lora_mod_aug`** | **`1.112±3.79`** | `0.060` | **`2.458`** | **`0.705`** | **`0.0184`** | **`0.9249`** | **`0.0106`** | `4.25` | **`valid=True`** |
+| **`A_npo_mod_aug`** | **`0.617±1.99`** | **`0.143`** | **`2.292`** | **`0.628`** | **`0.0366`** | `0.8860` | `0.0277` | **`2.97`** | **`valid=True`** |
+| `A_npo_no_aug` | `0.701±2.51` | `0.160` | `2.224` | `0.657` | `0.0403` | — | `0.0239` | `3.06` | `valid=True` |
+| `E_lora_r8_mod_aug` | `1.721±4.15` | `0.113` | `3.480` | `0.577` | `0.0334` | `0.8886` | `0.0199` | `4.90` | `valid=True` |
+| `B_bad_teacher_kl4` | `0.560±0.76` | `1.124` | `1.751` | `0.560` | `0.1512` | `0.7809` | `0.0997` | `7.59` | `valid=True` |
+
+### Enseignements & Classement pour soumission serveur
+1. **Validation des augmentations modérées :** supprimer `RandomGrayscale` et `Rotate15` du training divise `Proxy KL(T=2)` par **4× à 7×** (`0.154 → 0.0366` sur `A`, `0.133 → 0.0184` sur `H`), tout en transférant l'oubli aux copies altérées (`Stress CE = 2.29–2.46`).
+2. **Candidat #1 — `H_ssd_lora_mod_aug.pt` :** meilleur compromis global (`Proxy KL = 0.0184`, `Proxy Agree = 92.49%`, `Absent KL = 0.0106`, `Stress CE = 2.458`).
+3. **Candidat #2 — `A_npo_mod_aug.pt` :** profil complémentaire plus doux et plus homogène (`Raw CE = 0.617±1.99`, `Raw Ent = 0.143`, `Δθ = 2.97`).
+4. **Prochaine étape :** renseigner `API_KEY` dans `submission.py`, soumettre `H_ssd_lora_mod_aug.pt` puis `A_npo_mod_aug.pt` pour calibrer nos seuils locaux contre le vrai score serveur (`forget_score`, `retain_score`, `val_acc`).
