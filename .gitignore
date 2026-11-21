@@ -1,0 +1,35 @@
+# Python / Virtualenvs
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Large model weights, datasets & outputs
+*.pt
+*.pth
+*.pth.tar
+*.ckpt
+*.safetensors
+*.bin
+*.npz
+*.npy
+*.onnx
+data/
+datasets/
+output/
+outputs/
+submissions/
+*.csv
+*.jsonl
+
+# Secrets & local config
+.env
+.env.*
+*api_key*
+*secret*
+
+# OS / IDE
+.DS_Store
+.vscode/
+.idea/
