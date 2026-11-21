@@ -102,14 +102,18 @@ def gold_mimic_loss(
     target_prob: float = 0.60,
     temperature: float = 2.0,
 ) -> torch.Tensor:
-    """Match a per-sample Gold-Mimic target: p*=target_prob on top-1, (1-p*) on secondary classes at T."""
+    """Lower only the top-1 logit to target_prob while preserving the 99 non-target logits."""
+    p_star = min(max(target_prob, 0.05), 0.95)
     with torch.no_grad():
-        sec = F.softmax(orig_logits.float() / temperature, dim=-1)
-        sec.scatter_(1, labels.unsqueeze(1), 0.0)
-        sec = sec / sec.sum(dim=-1, keepdim=True).clamp_min(1e-8)
-        q_star = sec * (1.0 - target_prob)
-        q_star.scatter_(1, labels.unsqueeze(1), target_prob)
-    return F.kl_div(F.log_softmax(sub_logits.float(), dim=-1), q_star, reduction="batchmean")
+        z_orig = orig_logits.float()
+        masked = z_orig.scatter(1, labels.unsqueeze(1), -1e9)
+        lse_rest = torch.logsumexp(masked, dim=-1, keepdim=True)
+        gap = float(torch.log(torch.tensor(p_star / (1.0 - p_star))).item())
+        z_star = z_orig.scatter(1, labels.unsqueeze(1), lse_rest + gap)
+    kl_t = compute_kl_at_temperature(z_star, sub_logits.float(), temperature).mean()
+    ce_i = F.cross_entropy(sub_logits.float(), labels, reduction="none")
+    target_ce = float(-torch.log(torch.tensor(p_star)).item())
+    return kl_t + 0.5 * F.smooth_l1_loss(ce_i, torch.full_like(ce_i, target_ce))
 
 
 def compute_forget_loss(

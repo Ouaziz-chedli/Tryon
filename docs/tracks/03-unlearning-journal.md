@@ -287,6 +287,22 @@ $$\text{final\_score} = \text{forget\_score} \times \text{retain\_score} \quad \
   - **P2 (Gel chirurgical & multi-vues) :** comparer `freeze_until_block = 8` vs `6` avec `lr` différencié (`blocks.8..11` à `6e-5`, `head[active]` à `1.2e-4`), et calculer `npo_loss` sur `orig(f_batch_aug)` ou moyenne 2 vues (`clean` + `mod_aug`).
   - **P3 (Lab `lab_in100`) :** ne pas l'utiliser pour sélectionner les hyperparamètres tant que `.gamma` (`1e-4`), saturation `orig_lab` (`CE < 0.005`) et `make_stress_suite(f_x)` ne sont pas recalibrés.
 
+### 2026-11-21 (22h58–23h24) — Run 2× A100 Colab, Découverte du raccourci de résolution `CIFAR-100`, Sonde `#6` (`model.pt` = `0.0`) & Réalignement stratégique (`M1`–`M3`)
+- **Run 2× A100 Colab (`task-1750` & `task-1755`, tests unitaires `UNIT_TESTS_PASSED`) :**
+  - Validation de `gold_mimic_loss` (`GM_p60_f6_hm1.0` : `CE = 0.507 ± 0.63`, `p50 = 0.261`, `>95% = 0.21`, `dTheta = 2.41`) et `two_sided_npo_loss` (`TS_ce0.45_u0.65_f8` : `CE = 0.837 ± 1.12`, `p50 = 0.337`, `>95% = 0.29`, `dTheta = 3.47`).
+- **Preuve du raccourci de résolution `CIFAR-100` (`task-1779`) :**
+  - Sur Colab, `CIFAR-100` (`32×32` upscalé 7× en `224×224`) servait de proxy `retain` unique, donnant `ProxyKL = 0.0223` sur `CIFAR-100` mais `ProxyKL = 0.93–1.46` et `AbsKL = 0.64–1.00` sur `PatchMix 224×224` (le ViT utilisait le flou `32×32` vs netteté `224×224` comme raccourci).
+  - Suppression de `CIFAR-100` au profit de `PatchMix` multi-grilles `4×4 + 7×7` (`224×224` natif) dans [auto_tune_4gpu.py](../../tracks/03_unlearning_v2/auto_tune_4gpu.py), [sweep_bounded_4gpu.py](../../tracks/03_unlearning_v2/sweep_bounded_4gpu.py) et [eval_harness.py](../../tracks/03_unlearning_v2/eval_harness.py) (`seed=999` hors-échantillon), plus `gold_mimic_loss` chirurgical en logits ([common.py](../../tracks/03_unlearning_v2/methods/common.py)) et plafond `p50` dans `_snapshot_score`. Sessions Colab `track3_a` et `track3_b` stoppées (`0 CU/h`).
+- **6ᵉ soumission (`23h22`, Sonde `model.pt` non modifié, `task-1827`) — Score `0.0`** (`Previous best: 0.1166`, `improved: False`) :
+  - Prouve l'existence d'un garde-fou serveur anti-no-op sur `model.pt` intact (car `#5` à `0.1166` et `#2` à `0.0843` bornent déjà $|\mu_g - 1.44| + |\sigma_g - 2.01| \le 2.15$ et $\mu_g + \sigma_g \le 5.08$).
+- **Réalignement stratégique des objectifs :**
+  1. **Levier quasi exclusif sur `forget_score` (marge $\times 3$ à $\times 5$) :** passer `ProxyKL` de `0.055` à `0.035` ne change `retain_score` que de `~2 %` (`0.948 -> 0.966`). `ProxyKL <= 0.035` et `dTheta <= 3.5` sont des garde-fous, pas le levier principal.
+  2. **Hétérogénéité alignée sur `gold` (et non homogénéisation `ce_std <= 0.70`) :** sur des images held-out jamais vues, la CE d'un modèle `gold` (`acc ~ 80–85 %`) est à queue lourde (`p50_gold ~ 0.05–0.15`, `μ_gold ~ 0.5–0.9`, `σ_gold ~ 1.3–1.8 ≈ 2–3 × μ_gold`). Le défaut de `#5` (`0.1166`, `p50 = 0.38`, `μ = 1.44`, `σ = 2.01`) est une médiane trop haute et une queue placée au hasard.
+  3. **Priorités d'exécution dès libération GPU :**
+     - **M1 (Interpolation & Soupe de poids, [m1_soup.py](../../tracks/03_unlearning_v2/m1_soup.py), 0 entraînement) :** $\theta(\lambda) = (1-\lambda)\theta_0 + \lambda\theta_{\#5}$ ($\lambda \in [0.55, 0.92]$) et soupe des meilleurs checkpoints de `15903458` pour abaisser `p50` vers `0.15–0.22` et éliminer la variance parasite de batch.
+     - **M2 (Cibles Gold-Proxy par image dans l'espace des logits) :** estimer la typicalité *retain-free* par image (TTA modérée, Mahalanobis/kNN sur `blocks.8`, sensibilité au bruit de poids, tuned logit lens — validés par corrélation de Spearman $> 0.3$ avec `CE_gold` sur `lab_in100`) pour assigner une cible logit basse aux ~80 % d'images typiques et une erreur plausible (voisin sémantique à $T=2$) aux ~20 % d'images atypiques.
+     - **M3 (Paramétrisation à faible dimension : `LayerScale + LN + head[active]` ou `SVD-σ` sur `blocks.8..11`) :** borner structurellement `dTheta` et empêcher tout raccourci sur le proxy.
+
 ---
 
 ## 4. Défis techniques priorisés & Stratégies candidates

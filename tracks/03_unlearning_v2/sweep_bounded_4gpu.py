@@ -14,16 +14,15 @@ from task_template import IMAGE_SIZE, NUM_CLASSES, load_model, predict
 
 
 def _load_natural_proxy(forget_images: torch.Tensor, count: int = 3500) -> tuple[torch.Tensor, str]:
-    """Use local CIFAR-100 test images as natural retain proxy if cached, else PatchMix."""
-    cifar_dir = Path("dataset/cifar-100-python")
-    if not cifar_dir.exists():
-        return make_patchmix_proxy(forget_images, seed=42), "patchmix"
-    from torchvision.datasets import CIFAR100
-    import torchvision.transforms.functional as TF
-
-    ds = CIFAR100(root="dataset", train=False, download=False)
-    imgs = [TF.pil_to_tensor(img.convert("RGB").resize((IMAGE_SIZE, IMAGE_SIZE))).permute(1, 2, 0) for img, _ in ds]
-    return torch.stack(imgs[:count]), "cifar100_natural"
+    """Build 224x224 multi-grid PatchMix proxy (4x4 + 7x7) without resolution shortcuts."""
+    half = len(forget_images) // 2
+    if half == 0:
+        return make_patchmix_proxy(forget_images, seed=42, grid=4), "patchmix_g4_g7"
+    proxy = torch.cat([
+        make_patchmix_proxy(forget_images[:half], seed=42, grid=4),
+        make_patchmix_proxy(forget_images[half:], seed=43, grid=7),
+    ], dim=0)
+    return proxy[:count], "patchmix_g4_g7"
 
 
 def _build_configs() -> list[MethodConfig]:

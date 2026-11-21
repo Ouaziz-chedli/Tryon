@@ -7,7 +7,7 @@ import torch.nn.functional as F
 
 from augment import augment_training_batch
 from contracts import MethodConfig
-from methods.common import l2_anchor_loss, mask_absent_head_grads, npo_loss, retain_kl_loss, should_stop_early
+from methods.common import compute_forget_loss, l2_anchor_loss, mask_absent_head_grads, retain_kl_loss, should_stop_early
 from methods.ssd import run_ssd
 from task_template import DEVICE, preprocess
 
@@ -63,9 +63,7 @@ def _lora_forget_loss(
     if cfg.loss_kind == "bad_teacher":
         soft_t = F.softmax(orig_logits.float() / cfg.bad_teacher_temp, dim=-1)
         return F.kl_div(F.log_softmax(sub_f.float() / cfg.temperature, dim=-1), soft_t, reduction="batchmean")
-    return npo_loss(
-        sub_f, orig_logits, labels, cfg.npo_beta, cfg.temperature, max_ce=cfg.target_forget_ce,
-    )
+    return compute_forget_loss(sub_f, orig_logits, labels, cfg)
 
 
 def _lora_orig_params(orig_model: nn.Module, student: nn.Module) -> dict[str, torch.Tensor]:

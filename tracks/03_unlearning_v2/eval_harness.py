@@ -164,13 +164,13 @@ def validate_checkpoint(path: Path) -> ValidationResult:
 
 
 def _build_eval_proxy(forget_images: torch.Tensor, seed: int) -> torch.Tensor:
-    """Build out-of-sample retain proxy mixing 2x2 and 4x4 patchmix grids."""
+    """Build out-of-sample retain proxy mixing 4x4 and 7x7 patchmix grids."""
     half = len(forget_images) // 2
     if half == 0:
         return make_patchmix_proxy(forget_images, seed=seed, grid=4)
     return torch.cat([
-        make_patchmix_proxy(forget_images[:half], seed=seed, grid=2),
-        make_patchmix_proxy(forget_images[half:], seed=seed + 1, grid=4),
+        make_patchmix_proxy(forget_images[:half], seed=seed, grid=4),
+        make_patchmix_proxy(forget_images[half:], seed=seed + 1, grid=7),
     ], dim=0)
 
 

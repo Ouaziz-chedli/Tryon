@@ -45,31 +45,37 @@ def score_sweet_spot(ev: EvalReport) -> float:
     return 2.0 * p50_gain + (1.0 - fr.frac_gt_95) - 0.25 * cv - 5.0 * rp.proxy_kl_t2 - pen
 
 
-def _load_natural_proxy(forget_images: torch.Tensor, count: int = 3500) -> torch.Tensor:
-    """Use cached CIFAR-100 test images as natural retain proxy when available."""
-    if not Path("dataset/cifar-100-python").exists():
-        return make_patchmix_proxy(forget_images, seed=42)
-    from torchvision.datasets import CIFAR100
-    import torchvision.transforms.functional as TF
-
-    ds = CIFAR100(root="dataset", train=False, download=False)
-    imgs = [TF.pil_to_tensor(img.convert("RGB").resize((IMAGE_SIZE, IMAGE_SIZE))).permute(1, 2, 0) for img, _ in ds]
-    return torch.stack(imgs[:count])
+def _build_train_proxy(forget_images: torch.Tensor, seed: int = 42) -> torch.Tensor:
+    """Build 224x224 multi-grid PatchMix proxy (4x4 + 7x7) without resolution shortcuts."""
+    half = len(forget_images) // 2
+    if half == 0:
+        return make_patchmix_proxy(forget_images, seed=seed, grid=4)
+    return torch.cat([
+        make_patchmix_proxy(forget_images[:half], seed=seed, grid=4),
+        make_patchmix_proxy(forget_images[half:], seed=seed + 1, grid=7),
+    ], dim=0)
 
 
 @torch.no_grad()
 def _probe_step(
     student: torch.nn.Module, f_probe: torch.Tensor, pseudo_probe: torch.Tensor,
     p_probe: torch.Tensor, orig_p_probe: torch.Tensor, orig_params: dict[str, torch.Tensor],
-) -> tuple[float, float, float, float]:
-    """Measure (p50_ce, frac_gt_95, proxy_kl_t2, delta_l2) on fixed probe batches."""
+) -> tuple[float, float, float, float, float, float]:
+    """Measure (ce_mean, ce_std, p50_ce, frac_gt_95, proxy_kl_t2, delta_l2) on probes."""
     sub_f = predict(student, f_probe, batch_size=128)
     ce_i = torch.nn.functional.cross_entropy(sub_f, pseudo_probe, reduction="none")
     frac95 = float((torch.softmax(sub_f, dim=-1).max(dim=-1).values > 0.95).float().mean())
     sub_p = predict(student, p_probe, batch_size=128)
     pkl = float(compute_kl_at_temperature(orig_p_probe, sub_p, temperature=2.0).mean().item())
     d_l2 = float(sum(float((p.detach() - orig_params[n]).pow(2).sum()) for n, p in student.named_parameters() if n in orig_params) ** 0.5)
-    return float(ce_i.median()), frac95, pkl, d_l2
+    return float(ce_i.mean()), float(ce_i.std()), float(ce_i.median()), frac95, pkl, d_l2
+
+
+def _snapshot_score(ce_mean: float, ce_std: float, p50: float, f95: float, pkl: float, d_l2: float) -> float:
+    """Score intermediate snapshot: peak p50 in [0.35, 0.55], compress ce_std and drift."""
+    p50_term = min(p50, 0.55) - 1.5 * max(0.0, p50 - 0.65)
+    drift_pen = 15.0 * max(0.0, pkl - 0.032) + 0.8 * max(0.0, d_l2 - 3.2)
+    return p50_term - 0.35 * ce_std - 0.8 * f95 - drift_pen
 
 
 def _adjust_controller(opt: torch.optim.Optimizer, kl_w: float, l2_w: float, pkl: float, d_l2: float, p50: float) -> tuple[float, float]:
@@ -158,12 +164,14 @@ def run_adaptive_salun_npo(
         _adaptive_step(student, orig_model, opt, f_x, orig_f, pseudo, p_x, orig_p, orig_params, masks, absent_mask, cfg, kl_w, l2_w)
         if step % 15 != 0:
             continue
-        p50, f95, pkl, d_l2 = _probe_step(student, f_probe, pseudo_probe, p_probe, orig_p_probe, orig_params)
+        ce_mean, ce_std, p50, f95, pkl, d_l2 = _probe_step(student, f_probe, pseudo_probe, p_probe, orig_p_probe, orig_params)
         kl_w, l2_w = _adjust_controller(opt, kl_w, l2_w, pkl, d_l2, p50)
-        snap_score = p50 - 0.5 * f95 - 8.0 * max(0.0, pkl - 0.035) - 0.5 * max(0.0, d_l2 - 3.3)
-        if p50 >= 0.15 and pkl <= 0.042 and snap_score > best_score:
+        snap_score = _snapshot_score(ce_mean, ce_std, p50, f95, pkl, d_l2)
+        if 0.18 <= p50 <= 0.85 and pkl <= 0.055 and snap_score > best_score:
             best_score = snap_score
             best_sd = {k: v.detach().cpu().clone() for k, v in student.state_dict().items()}
+        if p50 > cfg.target_ce_upper + 0.15 and best_sd is not None:
+            break
     if best_sd is not None:
         student.load_state_dict(best_sd)
     return student.eval()
@@ -182,7 +190,7 @@ def _build_trials() -> list[tuple[str, MethodConfig]]:
         name = f"AT_ce{ce_tgt:.2f}_lr{lr:.0e}_f{frz}"
         trials.append(("adaptive", MethodConfig(name=name, strategy="salun_npo", steps=210, lr=lr, target_forget_ce=ce_tgt, retain_kl_weight=2.5, l2_weight=2e-3, salun_keep_ratio=0.25, freeze_until_block=frz)))
     for ce_tgt, rank in ((0.45, 8), (0.50, 16)):
-        trials.append(("lora_npo", MethodConfig(name=f"LORA_ce{ce_tgt:.2f}_r{rank}", strategy="lora_npo", steps=180, lr=8e-5, target_forget_ce=ce_tgt, retain_kl_weight=3.0, lora_rank=rank)))
+        trials.append(("lora_npo", MethodConfig(name=f"LORA_ce{ce_tgt:.2f}_r{rank}", strategy="lora_npo", loss_kind="two_sided_npo", steps=180, lr=2e-4, target_forget_ce=ce_tgt, target_ce_upper=0.65, retain_kl_weight=3.0, lora_rank=rank)))
     for alpha in (0.20, 0.30):
         trials.append(("ablit_adaptive", MethodConfig(name=f"FA_a{alpha:.2f}_gm60", strategy="salun_npo", loss_kind="gold_mimic", steps=180, lr=8e-5, gold_target_prob=0.60, retain_kl_weight=3.0, l2_weight=2e-3, abliteration_alpha=alpha, abliteration_rank=8, freeze_until_block=8)))
     return trials
@@ -199,7 +207,7 @@ def main() -> int:
     orig = load_model("model.pt")
     f_x = torch.from_numpy(np.load("forget_images.npz")["images"])
     orig_f = predict(orig, f_x, batch_size=128)
-    p_x = _load_natural_proxy(f_x)
+    p_x = _build_train_proxy(f_x)
     orig_p = predict(orig, p_x, batch_size=128)
     absent_mask = torch.bincount(orig_f.argmax(dim=-1), minlength=NUM_CLASSES) == 0
 
