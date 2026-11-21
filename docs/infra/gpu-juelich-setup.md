@@ -56,9 +56,34 @@ EOF
 exec bash
 ```
 
-### Cloner le repo de setup du hackathon
+### Cloner et lancer le setup officiel du hackathon (`SprintML/hackathon`)
+
+> **Important :** Le **team lead** exécute `hackathon_setup.sh` **en premier** (une seule fois), puis chaque teammate exécute `teammate.sh` depuis son propre compte JURECA.
+
+1. **Team lead (une seule fois) :**
 ```bash
-git clone https://huggingface.co/datasets/SprintML/hackathon
+mkdir -p ~/hackathon-scripts && cd ~/hackathon-scripts
+wget https://huggingface.co/datasets/SprintML/hackathon/resolve/main/hackathon_setup.sh -O hackathon_setup.sh
+wget https://huggingface.co/datasets/SprintML/hackathon/resolve/main/teammate.sh -O teammate.sh
+# Éditer TEAM_LEAD, TEAMMATE_1..3 et TEAM_FOLDER dans hackathon_setup.sh
+source hackathon_setup.sh
+```
+Le dossier partagé est créé dans `/p/scratch/training2666/<team-lead>/<team-folder>/` (contient les 3 datasets, `.venv/` par tâche, `.uv/` et `.cache/`).
+
+2. **Teammates (après la fin de `hackathon_setup.sh`) :**
+```bash
+mkdir -p ~/hackathon-scripts && cd ~/hackathon-scripts
+wget https://huggingface.co/datasets/SprintML/hackathon/resolve/main/teammate.sh -O teammate.sh
+# Éditer TEAM_LEAD et TEAM_FOLDER dans teammate.sh (vérifier PROJECT_NAME="training2666")
+source teammate.sh
+```
+
+3. **À chaque nouvelle connexion :**
+```bash
+jutil env activate -p training2666
+source ~/.bashrc
+cd /p/scratch/training2666/<team-lead>/<team-folder>/<dataset-name>
+source .venv/bin/activate
 ```
 
 ---
