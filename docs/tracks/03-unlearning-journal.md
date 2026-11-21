@@ -44,6 +44,10 @@ $$\text{final\_score} = \text{forget\_score} \times \text{retain\_score} \quad \
 
 > **ADR-01 — Règle scientifique sur les benchmarks :** Un point isolé dans un benchmark teste une **configuration `(méthode, dosage, hyperparamètres)`**, jamais la validité théorique de la famille entière. On ne rejette pas une stratégie sur un seul run mal dosé ; on compare les familles par leur **compromis oubli vs préservation (`Proxy KL` / `Absent KL`)** à niveau d'oubli comparable (front de Pareto), puis on optimise le dosage des meilleures candidates (type Optuna / sweep ciblé).
 
+> **ADR-02 — Architecture Orchestrateur + Sous-Agents & Ground-Truth Lab :**
+> 1. **Organisation :** chaque piste (`A` SalUn+NPO, `B` Bad-Teacher, `E` LoRA, `F/C` Abliteration/SSD, `G` Lab Vérité Terrain) est perfectionnée par un sous-agent dédié ; l'agent principal joue le rôle d'**orchestrateur** (supervision, centralisation des résultats, respect du cooldown 30 min et des $\le 4$ jobs cluster).
+> 2. **Nouvelle piste `G` (Ground-Truth Unlearning Lab) :** trouver un dataset public 100 classes sur HuggingFace, construire notre propre split `(retain, forget, val, altered)` avec un `orig_lab` et un vrai modèle `gold_lab`, afin de calculer **localement** les vraies métriques serveur (`val_acc >= 70%`, `mean_std_score`, `prediction_score`, `retain_score`) et calibrer nos stratégies avant soumission sur `model.pt`.
+
 ---
 
 ## 3. Journal Chronologique (Observations, Jobs & Décisions)
@@ -152,10 +156,27 @@ $$\text{final\_score} = \text{forget\_score} \times \text{retain\_score} \quad \
     1. **`H_ssd_lora_mod_aug.pt`** (`Proxy KL = 0.0184`, `Proxy Agree = 92.49%`, `Absent KL = 0.0106`, `Raw CE = 1.112±3.79`, `Stress CE = 2.458`).
     2. **`A_npo_mod_aug.pt`** (`Proxy KL = 0.0366`, `Raw CE = 0.617±1.99`, `Raw Ent = 0.143`, `Δθ = 2.97`).
 
-### 2026-11-21 (18h30) — Règles opérationnelles confirmées
-- **Cooldown soumission serveur :** **1 soumission toutes les 30 minutes** (`API_KEY` disponible dans `infra/team-access.md`).
+### 2026-11-21 (18h30 / 18h50) — Règles opérationnelles confirmées
+- **Cooldowns soumissions serveur (mis à jour 18h50) :** Track 3 Unlearning = **15 minutes** ; Track 1 Watermark = **10 minutes** ; soumission échouée = **2 minutes** (`API_KEY` dans `infra/team-access.md`).
 - **Quota cluster équipe `TRYON` :** **max 4 jobs concurrents** sur JURECA (`ouaziz1`, `sangkhavongs1`, `bassim1`).
 - Règles ajoutées à `AGENTS.md`.
+
+### 2026-11-21 (18h35) — 1ʳᵉ soumission serveur (`H_ssd_lora_mod_aug.pt`) : Score `0.0287` (8ᵉ)
+- **Résultat :** `Score (public split): 0.0287` (**Submission accepted** $\implies$ le modèle passe le *utility gate* `val_acc >= 70%`). Prochaine soumission autorisée vers `19h05`.
+- **Diagnostic du score `0.0287` :**
+  - Dans `run_15901899`, `H_ssd_lora_mod_aug` avait `Raw CE = 1.112 ± 3.79` et `Raw Ent = 0.060`.
+  - Une moyenne `1.112` avec un écart-type énorme (`3.79`) et une entropie très basse (`0.060`) indique une distribution **bimodale** : la majorité des images restent sur-confiantes/mémorisées (`Ent ~ 0`), tandis qu'une minorité explose à `CE > 10`. Or le serveur pénalise à la fois `std(L)` (`mean_std_score`) et `KL(p_gold || p_sub)` à $T=2$ sur chaque image (`prediction_score`).
+- **Hypothèse pour la 2ᵉ soumission :** il faut un oubli **homogène** (faible `std(L)`, entropie modérée `0.3–0.8` sur toutes les images, sans explosion bimodale) **avec** `Proxy KL < 0.04` — ex. combiner **Bad-Teacher (ou NPO avec lissage/plafond par image) + LoRA + augmentations modérées**.
+
+### 2026-11-21 (18h38) — Règles du Leaderboard confirmées
+- **Best-of :** seule la **meilleure** soumission par tâche est conservée (aucune pénalité si une itération score moins bien).
+- **Classement général :** moyenne normalisée `[0, 1]` sur les **3 tâches** ($\frac{1}{3}\sum_t \frac{s_t - \min_t}{\max_t - \min_t}$) — il faut un score sur **chaque** track pour être classé au général.
+- **Public (30 %) vs Final (70 %) :** éviter d'overfitter au score public ; privilégier les méthodes robustes et généralisables.
+
+### 2026-11-21 (18h45) — Amélioration du harnais local (`eval_harness.py`) & Benchmark v4 (`15902308`)
+- **Audit du harnais :** `retain` (`Proxy KL`, `Absent KL`, `Δθ`) se compare exactement à `orig` (même formule serveur $T=2$), mais sur `forget`, `mean±std` cachait la bimodalité.
+- **Ajout dans `StressMetrics` & `benchmark.py` :** `ce_p50` (médiane), `ce_p90`, et `frac_gt_95` (% d'images encore > 95 % de confiance) pour détecter directement si l'oubli est homogène ou bimodal.
+- **Benchmark v4 (`15902308`)** soumis sur JURECA (6 runs `LoRA + Bad-Teacher` & `NPO` doux). Note infra : Jülich PAM refuse la réutilisation du même code TOTP dans la même fenêtre de 30s (anti-replay) $\implies$ attendre la fenêtre suivante entre deux connexions SSH.
 
 ---
 

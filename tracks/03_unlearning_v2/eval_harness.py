@@ -43,8 +43,11 @@ def compute_stress_metrics(
     return StressMetrics(
         ce_mean=round(float(ce.mean()), 4),
         ce_std=round(float(ce.std()), 4),
+        ce_p50=round(float(torch.quantile(ce, 0.5)), 4),
+        ce_p90=round(float(torch.quantile(ce, 0.9)), 4),
         entropy_mean=round(float(entropy.mean()), 4),
         max_prob_mean=round(float(top2[:, 0].mean()), 4),
+        frac_gt_95=round(float((top2[:, 0] > 0.95).float().mean()), 4),
         margin_mean=round(float((top2[:, 0] - top2[:, 1]).mean()), 4),
         top1_agree_orig=round(float(agree), 4),
         kl_t2_from_orig=round(float(kl), 4),

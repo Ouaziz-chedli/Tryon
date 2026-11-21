@@ -9,8 +9,11 @@ class StressMetrics:
 
     ce_mean: float
     ce_std: float
+    ce_p50: float
+    ce_p90: float
     entropy_mean: float
     max_prob_mean: float
+    frac_gt_95: float
     margin_mean: float
     top1_agree_orig: float
     kl_t2_from_orig: float
@@ -77,5 +80,6 @@ class MethodConfig:
     abliteration_rank: int = 8
     abliteration_alpha: float = 0.4
     use_ssd_init: bool = False
+    loss_kind: str = "npo"
     seed: int = 42
 

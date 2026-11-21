@@ -15,11 +15,11 @@ TASK_DIR="/p/scratch/training2666/ouaziz1/TRYON/unlearning"
 HARNESS_DIR="$TASK_DIR/harness"
 
 cd "$TASK_DIR"
-mkdir -p "$TASK_DIR/output/benchmark"
+mkdir -p "$TASK_DIR/output/benchmark_v4"
 source "$TASK_DIR/.venv/bin/activate"
 
 PYTHONPATH="$HARNESS_DIR:$TASK_DIR" srun python "$HARNESS_DIR/benchmark.py" \
   --model-path "$TASK_DIR/model.pt" \
   --forget-path "$TASK_DIR/forget_images.npz" \
-  --out-dir "$TASK_DIR/output/benchmark_v3" \
+  --out-dir "$TASK_DIR/output/benchmark_v4" \
   --save-checkpoints

@@ -53,6 +53,7 @@ def test_tempered_saliency_shape_and_ratio() -> None:
     kept = sum(int(m.sum().item()) for m in masks.values())
     assert 0.20 <= (kept / total) <= 0.30
     assert MethodConfig(name="test", strategy="salun_npo").temperature == 2.0
+    assert MethodConfig(name="bt", strategy="lora_npo", loss_kind="bad_teacher").loss_kind == "bad_teacher"
 
 
 def test_alternative_retain_proxies_shapes() -> None:

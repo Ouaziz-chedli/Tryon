@@ -40,6 +40,8 @@ def test_identity_metrics_and_drift_are_zero() -> None:
     m = compute_stress_metrics(logits, logits, preds, temperature=2.0)
     assert m.top1_agree_orig == 1.0
     assert m.kl_t2_from_orig == 0.0
+    assert m.ce_p50 >= 0.0 and m.ce_p90 >= m.ce_p50
+    assert 0.0 <= m.frac_gt_95 <= 1.0
     assert torch.allclose(compute_kl_at_temperature(logits, logits, 2.0), torch.zeros(8), atol=1e-5)
 
     tiny = torch.nn.Linear(8, 4)
