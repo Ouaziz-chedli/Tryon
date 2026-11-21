@@ -262,6 +262,16 @@ $$\text{final\_score} = \text{forget\_score} \times \text{retain\_score} \quad \
 - **4ᵉ soumission (`22h05`) — `C_ssd_plus_A_npo.pt` : Score `0.0106`** (`Previous best: 0.0843`, `improved: False`, prochain créneau ~`22h20`).
   - *Diagnostic comparatif des 4 soumissions :* malgré `ProxyKL = 0.0170`, `C_ssd_plus_A_npo` combine **`p50 = 0.000` / `88% > 95%`** (bimodalité extrême `1.249 ± 3.43`) et un énorme déplacement de poids **`dTheta = 17.78`** dû à SSD (qui dégrade probablement `val_acc`/`retain_acc` hors PatchMix). Notre record `0.0843` (`A_npo_mod_aug`) reste le seul avec un **`dTheta` faible (`2.97`)** et `std = 1.99`.
 
+### 2026-11-21 (22h09–22h16) — Correction bornage *per-sample* & Sweep 4 GPUs JURECA (`15903458`)
+- **Colab `track3` arrêté** (`22h06`, solde `386.85 CU`, `0.00 CU/h`).
+- **Correctifs implémentés (`d4205d6`) :**
+  - `npo_loss(..., max_ce=...)` dans [common.py](../../tracks/03_unlearning_v2/methods/common.py) : masque à `0` la loss NPO **par image** dès que `ce_i >= max_ce`, et `should_stop_early` basé sur la **médiane (`p50`)** au lieu de la moyenne du batch (supprime la bimodalité `p50 = 0.000`).
+  - [sweep_bounded_4gpu.py](../../tracks/03_unlearning_v2/sweep_bounded_4gpu.py) + [slurm_sweep4.sh](../../tracks/03_unlearning_v2/slurm_sweep4.sh) : **12 configs** (`SalUn+NPO` sans SSD, `max_ce` ∈ `{0.45, 0.65, 0.85, 1.05}`, `lr` ∈ `{8e-5, 1.2e-4, 1.6e-4}`, `retain_kl_weight` ∈ `{2.0, 2.5, 3.0}`, `200` steps) avec proxy naturel `CIFAR-100` (si présent dans `dataset/`).
+- **Exécution JURECA :** Job **`15903458`** (`1` nœud `jrc0444`, `4 GPUs`, `cispahack`) **`COMPLETED`** en `14:40` (`ExitCode 0:0`, GPUs libérés). Toutes les 12 configs ont réglé la bimodalité (`p50` de `0.380` à `2.190`, `>95%` de `0.30` à `0.46`).
+- **5ᵉ soumission (`22h30`) — `B_ce0.45_lr8e-05_kl2.0.pt` : Nouveau record `0.1166`** (`Previous best: 0.0843`, **`improved: True`**, prochain créneau ~`22h45`).
+  - *Métriques locales :* `CE = 1.438 ± 2.01`, `p50 = 0.380`, `>95% = 0.37`, `ProxyKL = 0.0551`, `AbsKL = 0.0413`, `dTheta = 4.03`.
+  - *Piste suivante :* `auto_tune_4gpu.py` (`61abd56`, déjà prêt sur JURECA) pour ramener `ProxyKL <= 0.035` et `dTheta <= 3.2` tout en gardant `p50 ~ 0.35–0.50`.
+
 ---
 
 ## 4. Défis techniques priorisés & Stratégies candidates
