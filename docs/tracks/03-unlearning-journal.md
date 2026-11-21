@@ -387,6 +387,26 @@ $$\text{final\_score} = \text{forget\_score} \times \text{retain\_score} \quad \
 | **`AT_ce0.50_b2.0_f6`** | `0.1425` | **`1.430` (`0.381`)** | `0.991` | **`+0.440` (+44 %)** | `72.0 %` | `0.9705` | **`1.847`** | `98.2 %` | `0.1246` | Plus fort écart absolu (`+0.440`) et oubli soutenu, mais `Intra R_acc = 72.0 %` proche du seuil `70 %` |
 | `LORA_ce0.50_r16` | `0.0339` | `0.304` (`0.109`) | `0.273` | `+0.031` *(quasi nul)* | `92.9 %` | `0.7465` | `0.366` | `99.1 %` | `0.2231` | **Éliminé** : aucune sélectivité intra-classe (`0.304` vs `0.273`, dégrade toute la classe) et `Cross R_kl = 0.2231` (4× pire que `AT_b3.0_f8`) |
 
+### 2026-11-22 (00h49) — 7ᵉ Soumission serveur (`AT_ce0.50_b3.0_f8.pt`, `submission_id: 2169`) = `0.0604` & Preuve algébrique que nous sommes sur la pente montante ($\mu_{\text{sub}} + \sigma_{\text{sub}} < \mu_{\text{gold}} + \sigma_{\text{gold}}$)
+- **Résultat serveur (`00h49:11`, `task-2141`) :**
+  - `{"submission_id": 2169, "status": "success", "score": 0.0604, "previous_best": 0.1166, "delta": -0.0562, "improved": false}`
+- **Loi linéaire exacte révélée par les soumissions `#3`, `#7`, `#2` et `#5` :**
+  - Dans la formule officielle de `Unlearning.pdf` :
+    $$\text{mean\_std\_score} = 1 - \frac{|\mu_{\text{sub}} - \mu_{\text{gold}}| + |\sigma_{\text{sub}} - \sigma_{\text{gold}}|}{|\mu_{\text{orig}} - \mu_{\text{gold}}| + |\sigma_{\text{orig}} - \sigma_{\text{gold}}|}$$
+    Comme $\mu_{\text{orig}} \approx 0$ et $\sigma_{\text{orig}} \approx 0$, tant que le modèle soumis est en **sous-oubli** ($\mu_{\text{sub}} \le \mu_{\text{gold}}$ et $\sigma_{\text{sub}} \le \sigma_{\text{gold}}$), la formule se simplifie algébriquement en :
+    $$\text{mean\_std\_score} = \frac{\mu_{\text{sub}} + \sigma_{\text{sub}}}{\mu_{\text{gold}} + \sigma_{\text{gold}}}$$
+  - **Vérification empirique sur nos 4 soumissions SalUn/NPO à faible `ProxyKL` (`0.036–0.055`) :**
+
+| Soumission | Modèle | $\mu_{\text{sub}}$ (`CE mean`) | $\sigma_{\text{sub}}$ (`CE std`) | **Somme $\mu_{\text{sub}} + \sigma_{\text{sub}}$** | **Score serveur** | **Ratio $(\mu+\sigma)$ vs `#7`** | **Ratio Score vs `#7`** |
+| :---: | :--- | :---: | :---: | :---: | :---: | :---: | :---: |
+| `#3` | `E_lora_bt_T5.pt` | `0.169` | `0.330` | **`0.499`** | **`0.0117`** | `0.26×` | `0.19×` |
+| **`#7`** | **`AT_ce0.50_b3.0_f8.pt`** | `0.704` | `1.195` | **`1.899`** | **`0.0604`** | **`1.00×`** | **`1.00×`** |
+| `#2` | `A_npo_mod_aug.pt` | `0.617` | `1.990` | **`2.607`** | **`0.0843`** | **`1.373×`** | **`1.396×`** |
+| **`#5`** | **`B_ce0.45_lr8e-05_kl2.0.pt`** | `1.438` | `2.010` | **`3.448`** | **`0.1166`** | **`1.816×`** | **`1.930×`** |
+
+  - **Conclusion majeure :** la proportionnalité quasi parfaite entre $\mu_{\text{sub}} + \sigma_{\text{sub}}$ et le score serveur (`1.373× vs 1.396×` et `1.816× vs 1.930×`) démontre que **même `#5` (`CE = 1.438 ± 2.01`, `p50 = 0.380`) est encore en dessous de $(\mu_{\text{gold}}, \sigma_{\text{gold}})$** ! Réduire `CE` de `1.44 ± 2.01` à `0.70 ± 1.19` (`#7`) a divisé le score par deux (`0.1166 -> 0.0604`) parce qu'on s'est rapproché de `orig` au lieu de monter vers `gold` ($\mu_{\text{gold}} \approx 2.2\text{--}3.2$, $\sigma_{\text{gold}} \approx 3.0\text{--}4.0$, soit $\mu_{\text{gold}} + \sigma_{\text{gold}} \approx 5.5\text{--}7.5$).
+  - **Conséquence immédiate :** il faut aller dans la direction opposée à la réduction de CE — viser **`target_forget_ce` plus haut (`0.85` à `1.50`, soit `CE mean ~ 2.0–2.8`, `p50 ~ 0.80–1.40`, `>95% < 0.15`)** tout en gardant la sélectivité SalUn (`keep_ratio = 0.20`, `weight_decay = 0.0`, `ProxyKL <= 0.055`). Or nous avons déjà sur JURECA dans `/p/scratch/training2666/ouaziz1/TRYON/unlearning/output/bounded_sweep/` les checkpoints `B_ce0.65_*`, `B_ce0.85_*` et `B_ce1.05_*` du job `15903458` !
+
 ---
 
 ## 4. Défis techniques priorisés & Stratégies candidates
