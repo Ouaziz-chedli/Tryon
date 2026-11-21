@@ -74,7 +74,7 @@ def run_salun_npo(
         f_batch = augment_training_batch(forget_images[f_idx], mode=cfg.aug_mode)
         with torch.autocast(device_type="cuda", dtype=torch.float16, enabled=DEVICE == "cuda"):
             sub_f = student(preprocess(f_batch))
-        loss_f = npo_loss(sub_f, orig_forget_logits[f_idx].to(DEVICE), pseudo[f_idx].to(DEVICE), cfg.npo_beta, cfg.temperature)
+        loss_f = npo_loss(sub_f, orig_forget_logits[f_idx].to(DEVICE), pseudo[f_idx].to(DEVICE), cfg.npo_beta, cfg.temperature, max_ce=cfg.target_forget_ce)
         loss_r = retain_kl_loss(student, proxy_images[p_idx], orig_proxy_logits[p_idx], cfg.temperature)
         total = loss_f + cfg.retain_kl_weight * loss_r + cfg.l2_weight * l2_anchor_loss(student, orig_params)
         opt.zero_grad(set_to_none=True)

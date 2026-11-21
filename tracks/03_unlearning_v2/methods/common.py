@@ -36,11 +36,17 @@ def npo_loss(
     labels: torch.Tensor,
     beta: float = 0.1,
     temperature: float = 2.0,
+    max_ce: float | None = None,
 ) -> torch.Tensor:
-    """Negative Preference Optimization (COLM 2024) at temperature to avoid saturation."""
+    """Negative Preference Optimization (COLM 2024), optionally gated per-sample by max_ce."""
     sub_lp = F.log_softmax(sub_logits.float() / temperature, dim=-1).gather(1, labels.unsqueeze(1)).squeeze(1)
     orig_lp = F.log_softmax(orig_logits.float() / temperature, dim=-1).gather(1, labels.unsqueeze(1)).squeeze(1)
-    return (2.0 / beta) * F.softplus(beta * (sub_lp - orig_lp)).mean()
+    per_sample = (2.0 / beta) * F.softplus(beta * (sub_lp - orig_lp))
+    if max_ce is not None:
+        with torch.no_grad():
+            ce_i = F.cross_entropy(sub_logits.float(), labels, reduction="none")
+        per_sample = per_sample * (ce_i < max_ce).to(per_sample.dtype)
+    return per_sample.mean()
 
 
 @torch.no_grad()
@@ -50,12 +56,12 @@ def should_stop_early(
     pseudo_labels: torch.Tensor,
     target_ce: float,
 ) -> bool:
-    """Check target CE on clean (unaugmented) forget samples."""
+    """Check median CE on clean forget samples so outliers do not trigger premature stop."""
     student.eval()
     with torch.autocast(device_type="cuda", dtype=torch.float16, enabled=DEVICE == "cuda"):
         logits = student(preprocess(raw_batch))
-    ce = float(F.cross_entropy(logits.float(), pseudo_labels.to(DEVICE)).item())
-    return ce >= target_ce
+    ce_med = float(F.cross_entropy(logits.float(), pseudo_labels.to(DEVICE), reduction="none").median().item())
+    return ce_med >= target_ce
 
 
 def l2_anchor_loss(student: torch.nn.Module, orig_params: dict[str, torch.Tensor]) -> torch.Tensor:
