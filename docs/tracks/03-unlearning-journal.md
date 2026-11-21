@@ -316,6 +316,24 @@ $$\text{final\_score} = \text{forget\_score} \times \text{retain\_score} \quad \
   - Job Slurm `15903800` **annulé** (`scancel 15903800`, 0 GPU occupé, aucun relancement immédiat).
   - Mise à jour alignée sur le PDF de [03-unlearning.md](03-unlearning.md), [server_metrics.py](../../tracks/03_unlearning_v2/lab/server_metrics.py), [test_lab_metrics.py](../../tracks/03_unlearning_v2/tests/test_lab_metrics.py) et [m1_soup.py](../../tracks/03_unlearning_v2/m1_soup.py).
 
+### 2026-11-21 (23h50–23h58) — Copie & Analyse approfondie des 4 papiers officiels de `Unlearning.pdf`
+- **Papiers copiés dans `docs/papers/` et analysés individuellement par 4 sous-agents `researcher` (`pro`) :**
+  1. **SCRUB / Unbounded Machine Unlearning** ([2302.09880v3.pdf](../papers/2302.09880v3.pdf) · [analyse](../analyses/03-scrub-machine-unlearning.md)) :
+     - Démontre l'équivalence exacte entre le régime **User Privacy (UP)** du papier et la métrique de `Unlearning.pdf` (`mean_std_score` = défense `Basic MIA` sur les moments $(\mu, \sigma)$ de la loss ; `prediction_score` = défense `LiRA` instance par instance à $T=2$). Le Tableau 23 (p. 30) illustre l'effet Streisand du sur-oubli (`SCRUB` sans rewind : erreur `71.67%` $\implies$ `MIA = 78.0%`, pire que `Original = 65.3%`, alors que `SCRUB+R` ramène l'erreur à `19.33%` comme `Retrain = 29.33%`).
+     - Explique l'échec de `EU-k`/`CF-k` (dernière couche seule) en *Selective Unlearning* (Fig. 1a vs 1b, p. 10) : la mémorisation d'instances vit dans `blocks.6..11`.
+     - Donne un estimateur *retain-free* de `gold` (*Virtual Gold Teacher*) via **Patch-Dropout (40–50 % des patchs $16\times 16$ masqués) + multi-vues sur $w^o$**, qui brise la mémorisation d'instance ($\text{CE}=0.0003$) tout en préservant la variance naturelle $\sigma_{\text{gold}}$ et les classes secondaires à $T=2$.
+  2. **Zero-Shot Machine Unlearning** ([2201.05629v3.pdf](../papers/2201.05629v3.pdf) · [analyse](../analyses/04-zero-shot-machine-unlearning.md)) :
+     - La Table I du papier prouve que la Cross-Entropy dure sur du bruit *Min-Max* détruit l'accuracy `retain` (chute de 84 % à 20 %) car elle écrase le *dark knowledge* inter-classes.
+     - Dans **Gated Knowledge Transfer (GKT)**, deux briques sont directement exploitables sur nos mosaïques `PatchMix 224×224` : (a) le **Band-Pass Filter** $F(x_p)$ (Éq. 10 adaptée : filtrer les mosaïques ayant une trop forte similarité cosinus CLS ou probabilité sur la classe source de $\mathcal{D}_f$), et (b) l'**alignement normalisé des activations internes $L_{\text{at}}$** (Éq. 9 : $\|h_{\text{orig}}/\|h_{\text{orig}}\|_2 - h_{\text{sub}}/\|h_{\text{sub}}\|_2\|_2^2$) couplé à la distillation `KL(T=2)`.
+  3. **SalUn: Gradient-based Weight Saliency** ([2310.12508v5.pdf](../papers/2310.12508v5.pdf) · [analyse](../analyses/05-salun-weight-saliency-unlearning.md)) :
+     - Sur Vision Transformer (**Swin-T**, Table A10 p. 25, 10 % forget), `SalUn` atteint un écart `MIA` de **`0.02 %`** avec `Retrain` (`28.35 %` vs `28.33 %`), et une sparsité plus fine (`10–30 %` de poids modifiables) protège beaucoup mieux `RA` que `50 %`.
+     - **2 bugs découverts dans notre code grâce au papier :**
+       1. Dans `AdamW`, le `weight_decay = 0.01` par défaut s'applique à **tous** les paramètres `requires_grad=True` même quand `p.grad == 0`, faisant dériver vers `0` les $75\%$ de poids figés par SalUn ($\mathbf{m}_{\text{S}} = 0$) et les 55 classes absentes de `head.weight` (fix : `weight_decay=0.0` dans `build_optimizer`).
+       2. Le sous-échantillonnage `t.numel() // 4096` du quantile global sur-pondérait de $1000\times$ les petits tenseurs (`LayerNorm`, `LayerScale .gamma`) par rapport aux matrices MLP (fix : quantile exact **layer-wise par tenseur** `torch.quantile(v.reshape(-1), 1.0 - keep_ratio)`).
+  4. **NPO: Negative Preference Optimization** ([2404.05868v2.pdf](../papers/2404.05868v2.pdf) · [analyse](../analyses/06-npo-negative-preference-optimization.md)) :
+     - **Découverte mathématique majeure sur $\beta$ :** dans le poids adaptatif $W_\theta(x,y) = 2\sigma(-\beta \Delta L)$, la valeur $\beta = 0.1$ du papier (Section 5, TOFU) est calibrée pour des **séquences LLM de 30–50 tokens** où la somme des log-probs varie de $\Delta L_{\text{seq}} \sim 10\text{--}30$.
+     - En **classification mono-label** (Section 4, Table 1 p. 24, cas $\alpha=0$ où $\mathcal{D}_{\text{FG}}$ et $\mathcal{D}_{\text{RT}}$ partagent les mêmes classes), $\Delta \text{lp}_{T=2}$ vaut seulement $\sim -0.65$ pour atteindre $\text{CE}_{T=1}^* \approx 0.50$. Avec $\beta = 0.1$, $W_\theta = 2\sigma(-0.065) = 0.935 \approx 1.0$ : **le frein NPO était inactif dans toute la plage utile** ! En classification, les auteurs utilisent **$\beta \in [1.0, 10.0]$** (optimal $\beta \approx \mathbf{3.0}$ à $T=2$, qui freine $W_\theta \to 0.25$ dès $\text{CE} \approx 0.50$).
+
 ---
 
 ## 4. Défis techniques priorisés & Stratégies candidates

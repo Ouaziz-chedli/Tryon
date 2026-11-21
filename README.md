@@ -24,4 +24,7 @@ Repository privé de l'équipe **TRYON** pour le **European AI Championship Pari
 - **Pixel Seal** (*Meta FAIR, 2025*) : [analyse](docs/analyses/01-pixel-seal-watermarking.md) · [PDF](docs/papers/2512.16874v1.pdf)
 - **Model Equality Testing** (*Stanford, ICLR 2025*) : [analyse](docs/analyses/02-model-equality-testing.md) · [PDF](docs/papers/2410.20247v2.pdf)
 - **SCRUB / Unbounded Machine Unlearning** (*Warwick & DeepMind, NeurIPS 2023*) : [analyse](docs/analyses/03-scrub-machine-unlearning.md) · [PDF](docs/papers/2302.09880v3.pdf)
+- **Zero-Shot Machine Unlearning** (*NUS, IEEE TIFS 2023*) : [analyse](docs/analyses/04-zero-shot-machine-unlearning.md) · [PDF](docs/papers/2201.05629v3.pdf)
+- **SalUn: Weight Saliency Unlearning** (*MSU / UPenn / MIT-IBM, ICLR 2024*) : [analyse](docs/analyses/05-salun-weight-saliency-unlearning.md) · [PDF](docs/papers/2310.12508v5.pdf)
+- **NPO: Negative Preference Optimization** (*UC Berkeley, COLM 2024*) : [analyse](docs/analyses/06-npo-negative-preference-optimization.md) · [PDF](docs/papers/2404.05868v2.pdf)
 - **Notes d'idéation pré-hackathon :** [docs/ideation/pistes-hackathon.md](docs/ideation/pistes-hackathon.md)
