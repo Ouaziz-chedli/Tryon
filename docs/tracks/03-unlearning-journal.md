@@ -168,10 +168,27 @@ $$\text{final\_score} = \text{forget\_score} \times \text{retain\_score} \quad \
   - Une moyenne `1.112` avec un écart-type énorme (`3.79`) et une entropie très basse (`0.060`) indique une distribution **bimodale** : la majorité des images restent sur-confiantes/mémorisées (`Ent ~ 0`), tandis qu'une minorité explose à `CE > 10`. Or le serveur pénalise à la fois `std(L)` (`mean_std_score`) et `KL(p_gold || p_sub)` à $T=2$ sur chaque image (`prediction_score`).
 - **Hypothèse pour la 2ᵉ soumission :** il faut un oubli **homogène** (faible `std(L)`, entropie modérée `0.3–0.8` sur toutes les images, sans explosion bimodale) **avec** `Proxy KL < 0.04` — ex. combiner **Bad-Teacher (ou NPO avec lissage/plafond par image) + LoRA + augmentations modérées**.
 
+### 2026-11-21 (18h59) — Construction de la Piste `G` (Ground-Truth Lab) & Test de cohérence
+- **Objectif :** construire notre propre labo vérité terrain sur `imagenet-100` (`orig_lab` entraîné sur `R+F` vs `gold_lab` entraîné sur `R` seul), implémenter les formules exactes du serveur (`tracks/03_unlearning_v2/lab/server_metrics.py`), puis vérifier la cohérence en reproduisant le classement de nos 2 soumissions réelles (`A_npo_mod_aug` = `0.0843` > `H_ssd_lora_mod_aug` = `0.0287`).
+- Si le test de cohérence est positif, tous les benchmarks et sous-agents par piste basculent sur ce banc.
+
+### 2026-11-21 (18h57) — 2ᵉ soumission serveur (`A_npo_mod_aug.pt`) : Score `0.0843` (×2,94 !)
+- **Résultat :** `Score (public split): 0.0843` (`Previous best: 0.0287`, `improved: True`). Prochaine soumission possible vers **`19h12`**.
+- **Confirmation directe de notre hypothèse :**
+  - `H_ssd_lora_mod_aug` (`Raw CE = 1.112±3.79`, `Raw Ent = 0.060`, `Proxy KL = 0.0184`) $\rightarrow$ `0.0287`.
+  - `A_npo_mod_aug` (`Raw CE = 0.617±1.99`, `Raw Ent = 0.143`, `Proxy KL = 0.0366`) $\rightarrow$ **`0.0843`**.
+  - Réduire `std(L)` de `3.79 → 1.99` et monter `Raw Ent` de `0.060 → 0.143` a **triplé** le score, confirmant que notre levier principal est un oubli **plus homogène** (`std < 1.2`, `Ent ∈ [0.25, 0.70]`) tout en gardant `Proxy KL < 0.04`.
+
 ### 2026-11-21 (18h38) — Règles du Leaderboard confirmées
 - **Best-of :** seule la **meilleure** soumission par tâche est conservée (aucune pénalité si une itération score moins bien).
 - **Classement général :** moyenne normalisée `[0, 1]` sur les **3 tâches** ($\frac{1}{3}\sum_t \frac{s_t - \min_t}{\max_t - \min_t}$) — il faut un score sur **chaque** track pour être classé au général.
 - **Public (30 %) vs Final (70 %) :** éviter d'overfitter au score public ; privilégier les méthodes robustes et généralisables.
+
+### 2026-11-21 (18h54) — Calibration par soumissions (15 min) & Stratégie du Lab sur copie de `model.pt`
+- **Utilisation des soumissions :** exploiter la fenêtre de 15 min pour calibrer nos hypothèses sur le vrai score serveur et diagnostiquer où l'on pêche (`forget` vs `retain`).
+- **Stratégie Piste `G` (copie de `model.pt` entraînée sur notre nouveau dataset `retain + forget`) :**
+  - *Validation scientifique :* **très bonne stratégie**, à condition de (1) travailler sur une **copie** de `model.pt` (jamais sur l'original) et (2) entraîner `orig_lab` (sur `R_lab + F_lab`) et `gold_lab` (sur `R_lab` seul) avec **exactement le même protocole** depuis le même point de départ.
+  - *Gain :* donne accès aux vrais labels, à un vrai `retain`/`val set` et à un vrai `gold_lab` pour calculer les métriques exactes du serveur (`val_acc`, `mean_std_score`, `prediction_score`, `retain_score`) avant de réappliquer les meilleurs réglages sur `model.pt` seul.
 
 ### 2026-11-21 (18h45) — Amélioration du harnais local (`eval_harness.py`) & Benchmark v4 (`15902308`)
 - **Audit du harnais :** `retain` (`Proxy KL`, `Absent KL`, `Δθ`) se compare exactement à `orig` (même formule serveur $T=2$), mais sur `forget`, `mean±std` cachait la bimodalité.
