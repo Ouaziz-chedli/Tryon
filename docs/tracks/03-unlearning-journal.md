@@ -208,6 +208,12 @@ $$\text{final\_score} = \text{forget\_score} \times \text{retain\_score} \quad \
   - `E_lora_bt_T5` (`Raw CE = 0.169`, `Ent = 0.507`, `Δθ = 9.48`) $\rightarrow$ `0.0117`
 - **Leçon clé :** `Bad-Teacher T=5` a déplacé massivement les poids (`Δθ = 9.48`) pour monter l'entropie (`0.507`), mais `Raw CE = 0.169` reste beaucoup trop faible (sous-oubli : l'argmax reste mémorisé), tandis que `A_npo_mod_aug` atteint `CE = 0.617` avec `Δθ = 2.97`. D'où l'urgence du **Ground-Truth Lab (Piste G)** (`15902512` sur `uoft-cs/cifar100`) pour connaître le vrai compromis `gold`.
 
+### 2026-11-21 (19h50) — Bascule sur Google Colab Pro (`google-colab-cli`) & 1ᵉʳ test Lab (`cifar100`)
+- **Infra Colab Pro :** `google-colab-cli==0.8.0` installé via `uv` (+ `keyrings.alt` pour WSL2), solde `400.00 compute units`. Session A100 `track3` créée et exécutée en ~3.5 min (alors que `15902512` sur JURECA était encore `PD` après 31 min).
+- **1ᵉʳ test de cohérence (`tracks/03_unlearning_v2/results/lab_cifar100/coherence_report.json`) :**
+  - Le Lab reproduit bien le classement serveur : **`A_npo_mod_aug`** (`forget=0.3579`, `retain=0.3991`) **>>** **`H_ssd_lora_mod_aug`** (`forget=0.0079`, `retain=0.0088`).
+  - *Limite à corriger :* avec `200 imgs/classe` et `5 époques` sur `blocks.10..11`, `orig_lab` n'a atteint que `val_acc = 0.3727` (sous le gate `0.70`). Prochaine étape : passer à `500 imgs/classe` + `blocks.6..11 + head` pour monter `orig_lab` et `gold_lab` à `val_acc >= 85%`.
+
 ---
 
 ## 4. Défis techniques priorisés & Stratégies candidates

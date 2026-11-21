@@ -9,7 +9,7 @@ import torch.nn.functional as F
 from task_template import DEVICE, IMAGE_SIZE, load_model, preprocess
 
 
-def _load_dataset_tensors(dataset_name: str, max_per_class: int = 200) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]:
+def _load_dataset_tensors(dataset_name: str, max_per_class: int = 500) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]:
     """Load 100-class RGB uint8 tensors [N, 224, 224, 3] for train and val."""
     import torchvision.transforms.functional as TF
 
@@ -42,7 +42,7 @@ def _load_dataset_tensors(dataset_name: str, max_per_class: int = 200) -> tuple[
         return torch.stack(imgs), torch.tensor(labels, dtype=torch.long)
 
     tr_x, tr_y = _collect(rows_tr, max_per_class)
-    va_x, va_y = _collect(rows_va, 30)
+    va_x, va_y = _collect(rows_va, 50)
     return tr_x, tr_y, va_x, va_y
 
 
@@ -62,12 +62,14 @@ def _split_retain_forget(tr_x: torch.Tensor, tr_y: torch.Tensor, seed: int = 42)
     return {"r_x": tr_x[r_cat], "r_y": tr_y[r_cat], "f_x": tr_x[f_cat], "f_y": tr_y[f_cat]}
 
 
-def _train_lab_model(base_model: torch.nn.Module, x: torch.Tensor, y: torch.Tensor, epochs: int = 4, batch_size: int = 64) -> torch.nn.Module:
+def _train_lab_model(base_model: torch.nn.Module, x: torch.Tensor, y: torch.Tensor, epochs: int = 8, batch_size: int = 128) -> torch.nn.Module:
     """Fine-tune a copy of model.pt on (x, y) using identical protocol for orig_lab and gold_lab."""
     model = copy.deepcopy(base_model).to(DEVICE)
     for n, p in model.named_parameters():
-        p.requires_grad_(n.startswith("blocks.10") or n.startswith("blocks.11") or n.startswith("norm.") or n.startswith("head."))
-    opt = torch.optim.AdamW([p for p in model.parameters() if p.requires_grad], lr=1e-4, weight_decay=1e-4)
+        is_upper = n.startswith("blocks.") and int(n.split(".")[1]) >= 6
+        p.requires_grad_(is_upper or n.startswith("norm.") or n.startswith("head."))
+    opt = torch.optim.AdamW([p for p in model.parameters() if p.requires_grad], lr=1.5e-4, weight_decay=1e-4)
+    sched = torch.optim.lr_scheduler.CosineAnnealingLR(opt, T_max=epochs)
     for _ in range(epochs):
         model.train()
         perm = torch.randperm(len(x))
@@ -79,6 +81,7 @@ def _train_lab_model(base_model: torch.nn.Module, x: torch.Tensor, y: torch.Tens
             opt.zero_grad(set_to_none=True)
             loss.backward()
             opt.step()
+        sched.step()
     return model.eval()
 
 
@@ -87,7 +90,7 @@ def main() -> int:
     parser.add_argument("--model-path", type=Path, default=Path("model.pt"))
     parser.add_argument("--dataset", type=str, default="clane9/imagenet-100")
     parser.add_argument("--out-dir", type=Path, default=Path("output/lab"))
-    parser.add_argument("--epochs", type=int, default=5)
+    parser.add_argument("--epochs", type=int, default=8)
     args = parser.parse_args()
 
     args.out_dir.mkdir(parents=True, exist_ok=True)

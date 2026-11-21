@@ -1,0 +1,46 @@
+{
+  "gold_oracle": {
+    "val_acc": 0.3653,
+    "utility_gate_passed": false,
+    "mean_std_score": 1.0,
+    "prediction_score": 1.0,
+    "forget_score": 1.0,
+    "retain_acc_score": 0.9464,
+    "retain_kl_similarity": 0.8817,
+    "retain_score": 0.8345,
+    "final_score": 0.0
+  },
+  "orig_no_unlearn": {
+    "val_acc": 0.3727,
+    "utility_gate_passed": false,
+    "mean_std_score": 0.0356,
+    "prediction_score": 0.8071,
+    "forget_score": 0.0287,
+    "retain_acc_score": 1.0,
+    "retain_kl_similarity": 1.0,
+    "retain_score": 1.0,
+    "final_score": 0.0
+  },
+  "H_ssd_lora_mod_aug": {
+    "val_acc": 0.0193,
+    "utility_gate_passed": false,
+    "mean_std_score": 0.0186,
+    "prediction_score": 0.4245,
+    "forget_score": 0.0079,
+    "retain_acc_score": 0.0218,
+    "retain_kl_similarity": 0.4022,
+    "retain_score": 0.0088,
+    "final_score": 0.0
+  },
+  "A_npo_mod_aug": {
+    "val_acc": 0.2187,
+    "utility_gate_passed": false,
+    "mean_std_score": 0.5328,
+    "prediction_score": 0.6717,
+    "forget_score": 0.3579,
+    "retain_acc_score": 0.5863,
+    "retain_kl_similarity": 0.6808,
+    "retain_score": 0.3991,
+    "final_score": 0.0
+  }
+}

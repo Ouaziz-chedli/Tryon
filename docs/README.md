@@ -7,6 +7,7 @@
 ### 1. Infrastructure & Setup GPU ([infra/](file:///home/chedli/Code/20-Casquettes/hackatons/European_AI_Championship/docs/infra))
 - [GPU-usage-paris.pdf](file:///home/chedli/Code/20-Casquettes/hackatons/European_AI_Championship/docs/infra/GPU-usage-paris.pdf) — Slides officielles d'accès au cluster Jülich.
 - [gpu-juelich-setup.md](file:///home/chedli/Code/20-Casquettes/hackatons/European_AI_Championship/docs/infra/gpu-juelich-setup.md) — Guide synthétique pas-à-pas (JuDoor, MFA, clé SSH, `~/.ssh/config`, `uv`, Slurm `sbatch`).
+- [colab-l4-setup.md](../infra/colab-l4-setup.md) — Guide Google Colab Pro (GPU L4) via `google-colab-cli` (`uv`, OAuth, `colab new/exec/download/stop`).
 
 ### 2. Sujets officiels du Hackathon ([tracks/](file:///home/chedli/Code/20-Casquettes/hackatons/European_AI_Championship/docs/tracks))
 

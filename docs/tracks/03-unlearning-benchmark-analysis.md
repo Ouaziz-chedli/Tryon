@@ -4,6 +4,7 @@
 - **Benchmark v2 (`run_15901741`) :** [summary.md](../../tracks/03_unlearning_v2/results/run_15901741/summary.md) · [summary.json](../../tracks/03_unlearning_v2/results/run_15901741/summary.json)
 - **Benchmark v3 (`run_15901899`) :** [summary.md](../../tracks/03_unlearning_v2/results/run_15901899/summary.md) · [summary.json](../../tracks/03_unlearning_v2/results/run_15901899/summary.json) · checkpoints `.pt` (`327.71 Mo`, `valid=True`) sur JURECA dans `output/benchmark_v3/`
 - **Benchmark v4 (`run_15902297`) :** [summary.md](../../tracks/03_unlearning_v2/results/run_15902297/summary.md) · [summary.json](../../tracks/03_unlearning_v2/results/run_15902297/summary.json) · checkpoints `.pt` dans `output/benchmark_v4/` (avec `Raw p50` et `Frac>95%`)
+- **Ground-Truth Lab (`lab_cifar100`) :** [coherence_report.json](../../tracks/03_unlearning_v2/results/lab_cifar100/coherence_report.json)
 
 ---
 
@@ -84,3 +85,19 @@
 ### Enseignements clés
 1. **Validation des nouvelles métriques (`p50` & `Frac>95%`) :** `H_ssd_npo_gentle` semblait avoir `CE = 0.556`, mais `p50 = 0.000` et `Frac>95% = 0.93` prouvent qu'il laisse **93 %** des images intactes (bimodal).
 2. **`E_lora_bt_T5` (`LoRA + Bad-Teacher T=5`) :** oubli **vraiment homogène** (`std = 0.33`, `Frac>95%` divisé par 2 à `0.52`, `Raw Ent = 0.507`) tout en gardant `Proxy KL = 0.0189` et `Absent KL = 0.0119`. Candidat prioritaire pour la soumission de `19h12` !
+
+---
+
+## 5. Calibration Serveur & Ground-Truth Lab (`lab_cifar100` sur Colab A100)
+
+### 5.1 Scores réels obtenus sur le serveur (`31-unlearning`)
+
+| Soumission | Méthode | `Raw CE` | `Raw Ent` | `Proxy KL(T=2)` | `Δθ L2` | **Score Serveur** |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| #2 | **`A_npo_mod_aug.pt`** | **`0.617±1.99`** | `0.143` | `0.0366` | **`2.97`** | **`0.0843`** *(best)* |
+| #1 | `H_ssd_lora_mod_aug.pt` | `1.112±3.79` | `0.060` | `0.0184` | `4.25` | `0.0287` |
+| #3 | `E_lora_bt_T5.pt` | `0.169±0.33` | `0.507` | `0.0189` | `9.48` | `0.0117` |
+
+### 5.2 Premier test de cohérence du Lab (`200 imgs/classe`, `blocks.10..11`, 5 époques)
+- **Classement reproduit :** `A_npo_mod_aug` (`forget=0.3579`, `retain=0.3991`) **>>** `H_ssd_lora_mod_aug` (`forget=0.0079`, `retain=0.0088`), cohérent avec `0.0843 > 0.0287`.
+- **Correction en cours :** `orig_lab` n'avait atteint que `val_acc = 0.3727` (sous `0.70`) faute de données/blocs débloqués $\implies$ passage à `500 imgs/classe` + `blocks.6..11 + head` sur `8 époques` pour dépasser `val_acc >= 85%`.
