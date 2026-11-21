@@ -65,7 +65,7 @@ class MethodConfig:
     batch_size: int = 64
     lr: float = 3e-5
     temperature: float = 2.0
-    npo_beta: float = 0.1
+    npo_beta: float = 2.5
     retain_kl_weight: float = 2.0
     l2_weight: float = 1e-3
     salun_keep_ratio: float = 0.25

@@ -19,6 +19,7 @@ from methods.common import (
     l2_anchor_loss,
     mask_absent_head_grads,
     prepare_student,
+    restore_absent_head_rows,
     retain_kl_loss,
 )
 from methods.lora_unlearn import run_lora_npo
@@ -27,22 +28,22 @@ from task_template import IMAGE_SIZE, NUM_CLASSES, load_model, predict, preproce
 
 
 def score_sweet_spot(ev: EvalReport) -> float:
-    """Rank candidates by homogeneous forgetting while penalizing retain/weight drift."""
-    fr, rp = ev.forget_raw, ev.retain_proxy
+    """Rank candidates by Unlearning.pdf linear clipped 50/50 raw+altered forget proxy while guarding retain drift."""
+    fr, fa, rp = ev.forget_raw, ev.forget_aug, ev.retain_proxy
     if not ev.checkpoint or not ev.checkpoint.valid:
         return -1e6
     pen = 0.0
-    if rp.proxy_kl_t2 > 0.038:
-        pen += 25.0 * (rp.proxy_kl_t2 - 0.038)
+    if rp.proxy_kl_t2 > 0.042:
+        pen += 25.0 * (rp.proxy_kl_t2 - 0.042)
     if rp.absent_classes_kl_t2 > 0.025:
         pen += 20.0 * (rp.absent_classes_kl_t2 - 0.025)
-    if rp.delta_l2_total > 3.5:
-        pen += 0.5 * (rp.delta_l2_total - 3.5)
-    if fr.frac_gt_95 > 0.45:
-        pen += 3.0 * (fr.frac_gt_95 - 0.45)
-    cv = fr.ce_std / max(fr.ce_mean, 0.1)
-    p50_gain = min(fr.ce_p50, 0.70) - 0.5 * max(0.0, fr.ce_p50 - 0.85)
-    return 2.0 * p50_gain + (1.0 - fr.frac_gt_95) - 0.25 * cv - 5.0 * rp.proxy_kl_t2 - pen
+    if rp.delta_l2_total > 4.2:
+        pen += 0.5 * (rp.delta_l2_total - 4.2)
+    raw_d = abs(fr.ce_p50 - 0.50) + 0.35 * abs(fr.ce_std - 1.35) + 0.5 * max(0.0, fr.frac_gt_95 - 0.35)
+    aug_d = abs(fa.ce_p50 - 0.70) + 0.35 * abs(fa.ce_std - 1.50) + 0.5 * max(0.0, fa.frac_gt_95 - 0.30)
+    f_raw_score = 1.0 - min(1.0, raw_d / 1.15)
+    f_aug_score = 1.0 - min(1.0, aug_d / 1.35)
+    return 0.5 * (f_raw_score + f_aug_score) - 4.0 * rp.proxy_kl_t2 - pen
 
 
 def _build_train_proxy(forget_images: torch.Tensor, seed: int = 42) -> torch.Tensor:
@@ -72,10 +73,11 @@ def _probe_step(
 
 
 def _snapshot_score(ce_mean: float, ce_std: float, p50: float, f95: float, pkl: float, d_l2: float) -> float:
-    """Score intermediate snapshot: peak p50 in [0.35, 0.55], compress ce_std and drift."""
-    p50_term = min(p50, 0.55) - 1.5 * max(0.0, p50 - 0.65)
-    drift_pen = 15.0 * max(0.0, pkl - 0.032) + 0.8 * max(0.0, d_l2 - 3.2)
-    return p50_term - 0.35 * ce_std - 0.8 * f95 - drift_pen
+    """Score intermediate snapshot via linear clipped distance to Gold p50~0.50 and natural std~1.35."""
+    d_sub = abs(p50 - 0.50) + 0.25 * abs(ce_std - 1.35) + 0.6 * max(0.0, f95 - 0.35)
+    f_score = 1.0 - min(1.0, d_sub / 1.15)
+    drift_pen = 15.0 * max(0.0, pkl - 0.038) + 0.6 * max(0.0, d_l2 - 4.0)
+    return f_score - drift_pen
 
 
 def _adjust_controller(opt: torch.optim.Optimizer, kl_w: float, l2_w: float, pkl: float, d_l2: float, p50: float) -> tuple[float, float]:
@@ -142,6 +144,7 @@ def _adaptive_step(
             p.grad.mul_(masks[n])
     mask_absent_head_grads(student, absent_mask)
     opt.step()
+    restore_absent_head_rows(student, orig_model, absent_mask)
 
 
 def run_adaptive_salun_npo(
@@ -178,19 +181,19 @@ def run_adaptive_salun_npo(
 
 
 def _build_trials() -> list[tuple[str, MethodConfig]]:
-    """Build multi-strategy trials including P1 two-sided/gold-mimic and P2 block-8 freeze."""
+    """Build multi-strategy trials using paper-derived NPO beta in {2.0, 3.0} and layer-wise SalUn."""
     trials: list[tuple[str, MethodConfig]] = []
     for p_star, frz, h_mult in ((0.55, 8, 1.5), (0.60, 8, 1.5), (0.60, 6, 1.0), (0.65, 8, 2.0)):
         name = f"GM_p{int(p_star*100)}_f{frz}_hm{h_mult:.1f}"
-        trials.append(("adaptive", MethodConfig(name=name, strategy="salun_npo", loss_kind="gold_mimic", steps=210, lr=8e-5, gold_target_prob=p_star, retain_kl_weight=2.5, l2_weight=2e-3, salun_keep_ratio=0.25, freeze_until_block=frz, head_lr_mult=h_mult)))
-    for ce_tgt, upper, frz in ((0.45, 0.65, 8), (0.50, 0.70, 8), (0.45, 0.65, 6)):
-        name = f"TS_ce{ce_tgt:.2f}_u{upper:.2f}_f{frz}"
-        trials.append(("adaptive", MethodConfig(name=name, strategy="salun_npo", loss_kind="two_sided_npo", steps=210, lr=8e-5, target_forget_ce=ce_tgt, target_ce_upper=upper, pullback_weight=0.5, retain_kl_weight=2.5, l2_weight=2e-3, salun_keep_ratio=0.25, freeze_until_block=frz)))
-    for ce_tgt, lr, frz in ((0.50, 8e-5, 6), (0.50, 1.2e-4, 8)):
-        name = f"AT_ce{ce_tgt:.2f}_lr{lr:.0e}_f{frz}"
-        trials.append(("adaptive", MethodConfig(name=name, strategy="salun_npo", steps=210, lr=lr, target_forget_ce=ce_tgt, retain_kl_weight=2.5, l2_weight=2e-3, salun_keep_ratio=0.25, freeze_until_block=frz)))
+        trials.append(("adaptive", MethodConfig(name=name, strategy="salun_npo", loss_kind="gold_mimic", steps=210, lr=8e-5, gold_target_prob=p_star, retain_kl_weight=2.5, l2_weight=2e-3, salun_keep_ratio=0.20, freeze_until_block=frz, head_lr_mult=h_mult)))
+    for ce_tgt, upper, beta, keep in ((0.45, 0.70, 2.5, 0.20), (0.50, 0.75, 2.5, 0.25), (0.50, 0.75, 3.0, 0.15)):
+        name = f"TS_ce{ce_tgt:.2f}_b{beta:.1f}_k{int(keep*100)}"
+        trials.append(("adaptive", MethodConfig(name=name, strategy="salun_npo", loss_kind="two_sided_npo", steps=210, lr=8e-5, npo_beta=beta, target_forget_ce=ce_tgt, target_ce_upper=upper, pullback_weight=0.5, retain_kl_weight=2.5, l2_weight=2e-3, salun_keep_ratio=keep, freeze_until_block=8)))
+    for ce_tgt, beta, frz in ((0.50, 2.0, 6), (0.50, 3.0, 8)):
+        name = f"AT_ce{ce_tgt:.2f}_b{beta:.1f}_f{frz}"
+        trials.append(("adaptive", MethodConfig(name=name, strategy="salun_npo", steps=210, lr=8e-5, npo_beta=beta, target_forget_ce=ce_tgt, retain_kl_weight=2.5, l2_weight=2e-3, salun_keep_ratio=0.20, freeze_until_block=frz)))
     for ce_tgt, rank in ((0.45, 8), (0.50, 16)):
-        trials.append(("lora_npo", MethodConfig(name=f"LORA_ce{ce_tgt:.2f}_r{rank}", strategy="lora_npo", loss_kind="two_sided_npo", steps=180, lr=2e-4, target_forget_ce=ce_tgt, target_ce_upper=0.65, retain_kl_weight=3.0, lora_rank=rank)))
+        trials.append(("lora_npo", MethodConfig(name=f"LORA_ce{ce_tgt:.2f}_r{rank}", strategy="lora_npo", loss_kind="two_sided_npo", steps=180, lr=2e-4, npo_beta=2.5, target_forget_ce=ce_tgt, target_ce_upper=0.70, retain_kl_weight=3.0, lora_rank=rank)))
     for alpha in (0.20, 0.30):
         trials.append(("ablit_adaptive", MethodConfig(name=f"FA_a{alpha:.2f}_gm60", strategy="salun_npo", loss_kind="gold_mimic", steps=180, lr=8e-5, gold_target_prob=0.60, retain_kl_weight=3.0, l2_weight=2e-3, abliteration_alpha=alpha, abliteration_rank=8, freeze_until_block=8)))
     return trials

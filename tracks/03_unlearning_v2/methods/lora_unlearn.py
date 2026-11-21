@@ -124,7 +124,7 @@ def run_lora_npo(
     _inject_lora(student, cfg.freeze_until_block, cfg.lora_rank)
     orig_params = _lora_orig_params(orig_model, student)
     pseudo = orig_forget_logits.argmax(dim=-1)
-    opt = torch.optim.AdamW([p for p in student.parameters() if p.requires_grad], lr=cfg.lr)
+    opt = torch.optim.AdamW([p for p in student.parameters() if p.requires_grad], lr=cfg.lr, weight_decay=0.0)
 
     for step in range(1, cfg.steps + 1):
         f_raw, f_lbl = _lora_step(

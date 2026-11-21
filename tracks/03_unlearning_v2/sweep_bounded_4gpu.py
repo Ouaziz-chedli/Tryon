@@ -26,14 +26,14 @@ def _load_natural_proxy(forget_images: torch.Tensor, count: int = 3500) -> tuple
 
 
 def _build_configs() -> list[MethodConfig]:
-    """12 per-sample bounded configs (no SSD, dTheta kept tight)."""
+    """12 per-sample bounded configs with paper-derived NPO beta in {2.0, 2.5, 3.0} and layer-wise SalUn."""
     cfgs = []
-    for ce_tgt in (0.45, 0.65, 0.85, 1.05):
-        for lr, kl_w in ((8e-5, 2.0), (1.2e-4, 2.5), (1.6e-4, 3.0)):
-            name = f"B_ce{ce_tgt:.2f}_lr{lr:.0e}_kl{kl_w:.1f}"
+    for ce_tgt in (0.45, 0.55, 0.65, 0.80):
+        for lr, kl_w, beta in ((8e-5, 2.0, 2.0), (8e-5, 2.5, 2.5), (1.0e-4, 2.5, 3.0)):
+            name = f"B_ce{ce_tgt:.2f}_b{beta:.1f}_kl{kl_w:.1f}"
             cfgs.append(MethodConfig(
-                name=name, strategy="salun_npo", steps=200, lr=lr,
-                target_forget_ce=ce_tgt, retain_kl_weight=kl_w, aug_mode="moderate",
+                name=name, strategy="salun_npo", steps=200, lr=lr, npo_beta=beta,
+                target_forget_ce=ce_tgt, retain_kl_weight=kl_w, salun_keep_ratio=0.20, aug_mode="moderate",
             ))
     return cfgs
 

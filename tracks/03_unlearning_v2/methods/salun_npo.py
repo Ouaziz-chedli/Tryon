@@ -12,6 +12,7 @@ from methods.common import (
     l2_anchor_loss,
     mask_absent_head_grads,
     prepare_student,
+    restore_absent_head_rows,
     retain_kl_loss,
     should_stop_early,
 )
@@ -25,11 +26,11 @@ def compute_tempered_saliency(
     pseudo_labels: torch.Tensor,
     keep_ratio: float,
     temperature: float = 2.0,
-    num_batches: int = 12,
-    batch_size: int = 32,
+    num_batches: int = 32,
+    batch_size: int = 64,
     seed: int = 42,
 ) -> dict[str, torch.Tensor]:
-    """Compute SalUn binary masks using tempered logits on shuffled indices."""
+    """Compute layer-wise SalUn binary masks using tempered logits on shuffled indices."""
     model.eval()
     model.zero_grad(set_to_none=True)
     dev = next(model.parameters()).device
@@ -46,9 +47,10 @@ def compute_tempered_saliency(
             if p.requires_grad and p.grad is not None:
                 accum[n] += p.grad.detach().abs().float()
         model.zero_grad(set_to_none=True)
-    samples = [t.reshape(-1)[:: max(1, t.numel() // 4096)].cpu() for t in accum.values()]
-    thresh = float(torch.quantile(torch.cat(samples), 1.0 - keep_ratio).item())
-    return {k: (v >= thresh).to(v.dtype) for k, v in accum.items()}
+    return {
+        k: (v >= torch.quantile(v.reshape(-1), 1.0 - keep_ratio)).to(v.dtype)
+        for k, v in accum.items()
+    }
 
 
 def _salun_step(
@@ -82,6 +84,7 @@ def _salun_step(
             p.grad.mul_(masks[n])
     mask_absent_head_grads(student, absent_mask)
     opt.step()
+    restore_absent_head_rows(student, orig_model, absent_mask)
     return forget_images[f_idx], pseudo[f_idx]
 
 

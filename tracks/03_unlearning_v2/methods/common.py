@@ -30,11 +30,23 @@ def mask_absent_head_grads(student: torch.nn.Module, absent_mask: torch.Tensor) 
             param.grad[mask_dev] = 0.0
 
 
+@torch.no_grad()
+def restore_absent_head_rows(
+    student: torch.nn.Module,
+    orig_model: torch.nn.Module,
+    absent_mask: torch.Tensor,
+) -> None:
+    """Enforce exact SalUn Eq. 4 invariance on the 55 absent classifier rows."""
+    mask_dev = absent_mask.to(student.head.weight.device)
+    student.head.weight.data[mask_dev] = orig_model.head.weight.data.to(mask_dev.device)[mask_dev]
+    student.head.bias.data[mask_dev] = orig_model.head.bias.data.to(mask_dev.device)[mask_dev]
+
+
 def npo_loss(
     sub_logits: torch.Tensor,
     orig_logits: torch.Tensor,
     labels: torch.Tensor,
-    beta: float = 0.1,
+    beta: float = 2.5,
     temperature: float = 2.0,
     max_ce: float | None = None,
 ) -> torch.Tensor:
@@ -77,7 +89,7 @@ def two_sided_npo_loss(
     sub_logits: torch.Tensor,
     orig_logits: torch.Tensor,
     labels: torch.Tensor,
-    beta: float = 0.1,
+    beta: float = 2.5,
     temperature: float = 2.0,
     target_ce: float = 0.45,
     upper_ce: float = 0.65,
@@ -102,18 +114,20 @@ def gold_mimic_loss(
     target_prob: float = 0.60,
     temperature: float = 2.0,
 ) -> torch.Tensor:
-    """Lower only the top-1 logit to target_prob while preserving the 99 non-target logits."""
+    """Lower top-1 logit with margin-modulated per-sample heterogeneity while preserving 99 non-target logits."""
     p_star = min(max(target_prob, 0.05), 0.95)
     with torch.no_grad():
         z_orig = orig_logits.float()
-        masked = z_orig.scatter(1, labels.unsqueeze(1), -1e9)
-        lse_rest = torch.logsumexp(masked, dim=-1, keepdim=True)
-        gap = float(torch.log(torch.tensor(p_star / (1.0 - p_star))).item())
-        z_star = z_orig.scatter(1, labels.unsqueeze(1), lse_rest + gap)
+        z_top = z_orig.gather(1, labels.unsqueeze(1))
+        lse_rest = torch.logsumexp(z_orig.scatter(1, labels.unsqueeze(1), -1e9), dim=-1, keepdim=True)
+        margin = z_top - lse_rest
+        margin_z = (margin - margin.mean()) / margin.std(correction=0).clamp_min(1e-4)
+        p_i = (p_star + 0.12 * torch.tanh(0.5 * margin_z)).clamp(0.15, 0.90)
+        z_star = z_orig.scatter(1, labels.unsqueeze(1), lse_rest + torch.log(p_i / (1.0 - p_i)))
+        target_ce_i = -torch.log(p_i).squeeze(1)
     kl_t = compute_kl_at_temperature(z_star, sub_logits.float(), temperature).mean()
     ce_i = F.cross_entropy(sub_logits.float(), labels, reduction="none")
-    target_ce = float(-torch.log(torch.tensor(p_star)).item())
-    return kl_t + 0.5 * F.smooth_l1_loss(ce_i, torch.full_like(ce_i, target_ce))
+    return kl_t + 0.5 * F.smooth_l1_loss(ce_i, target_ce_i)
 
 
 def compute_forget_loss(
@@ -149,11 +163,11 @@ def get_batch_orig_logits(
 
 
 def build_optimizer(student: torch.nn.Module, lr: float, head_lr_mult: float = 1.0) -> torch.optim.AdamW:
-    """Build AdamW with optional differentiated learning rate for head vs backbone."""
+    """Build AdamW with weight_decay=0.0 so SalUn masked weights and absent classes never decay."""
     head_params = [p for n, p in student.named_parameters() if p.requires_grad and n.startswith("head.")]
     body_params = [p for n, p in student.named_parameters() if p.requires_grad and not n.startswith("head.")]
     groups = [{"params": body_params, "lr": lr}, {"params": head_params, "lr": lr * head_lr_mult}]
-    return torch.optim.AdamW([g for g in groups if g["params"]])
+    return torch.optim.AdamW([g for g in groups if g["params"]], weight_decay=0.0)
 
 
 def retain_kl_loss(
