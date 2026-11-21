@@ -29,11 +29,12 @@ def _load_dataset_tensors(dataset_name: str, max_per_class: int = 200) -> tuple[
         counts = [0] * 100
         imgs, labels = [], []
         for row in rows:
-            y = int(row["label"])
+            y = int(row["label"] if "label" in row else row["fine_label"])
             if counts[y] >= limit_per_cls:
                 continue
             counts[y] += 1
-            pil = row["image"].convert("RGB").resize((IMAGE_SIZE, IMAGE_SIZE))
+            img_obj = row["image"] if "image" in row else row["img"]
+            pil = img_obj.convert("RGB").resize((IMAGE_SIZE, IMAGE_SIZE))
             imgs.append(TF.pil_to_tensor(pil).permute(1, 2, 0))
             labels.append(y)
             if all(c >= limit_per_cls for c in counts):
