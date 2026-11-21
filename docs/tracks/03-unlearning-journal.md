@@ -214,6 +214,19 @@ $$\text{final\_score} = \text{forget\_score} \times \text{retain\_score} \quad \
   - Le Lab reproduit bien le classement serveur : **`A_npo_mod_aug`** (`forget=0.3579`, `retain=0.3991`) **>>** **`H_ssd_lora_mod_aug`** (`forget=0.0079`, `retain=0.0088`).
   - *Limite à corriger :* avec `200 imgs/classe` et `5 époques` sur `blocks.10..11`, `orig_lab` n'a atteint que `val_acc = 0.3727` (sous le gate `0.70`). Prochaine étape : passer à `500 imgs/classe` + `blocks.6..11 + head` pour monter `orig_lab` et `gold_lab` à `val_acc >= 85%`.
 
+### 2026-11-21 (19h52–20h16) — Bascule L4 / JURECA libéré / Tuto Colab & retour A100
+- **JURECA :** job `15902512` annulé (`scancel -u ouaziz1`) ; `AGENTS.md` mis à jour avec la règle stricte **1 seul job Slurm (running+PD) pour toute l'équipe TRYON** (nœuds exclusifs à 4 GPUs). Vérification équipe : `bassim1` avait 2 jobs `PD` (`15902604`, `15902605`) sur Track 1.
+- **Colab L4 (`1.94 CU/h`) :** testé sur `500 imgs/classe × 8 époques` (`task-1188` annulé à 14m52s car trop lent sur L4 pour construire le Lab complet). Création du guide d'équipe [infra/colab-l4-setup.md](../../infra/colab-l4-setup.md).
+- **Colab A100 (`6.73 CU/h`, ~59.2h dispo sur `398.75 CU`) :** choisi pour le Lab et les gros runs.
+
+### 2026-11-21 (20h25) — Ground-Truth Lab v2 sur Colab A100 (`350 imgs/cls`, `blocks.6..11`, 6 ép.)
+- **Résultats (`lab_cifar100_v2/coherence_report.json`) :** `orig_lab val_acc = 0.4772`, `gold_oracle val_acc = 0.4576`. Le classement reste 100 % cohérent (`A_npo_mod_aug` `forget=0.3232, retain=0.3119` >> `H_ssd_lora` `0.0052, 0.0327`), mais `blocks.0..5` gelés sur CIFAR-100 (`32×32`) plafonnent à ~48 %. Il faut débloquer `blocks.0..11` et charger `clane9/imagenet-100` sur Colab pour dépasser `val_acc >= 85%`.
+
+### 2026-11-21 (20h27–20h31) — Test `A_npo_kl3_ce0.75` & Lancement Lab `clane9/imagenet-100`
+- **`A_npo_kl3_ce0.75.pt`** (`salun_npo`, `lr=8e-5`, `retain_kl=3.0`, `target_ce=0.75`) : trop doux localement (`ce_mean = 0.0413`, `frac_gt_95 = 0.9546`, `proxy_kl_t2 = 0.0072`).
+- **Constat infra soumission :** `requests.post` de 328 Mo depuis Colab US vers `34.147.229.55` a expiré en `TimeoutError` (soumissions restreintes / optimisées depuis JURECA) $\implies$ **pipeline validé :** calcul sur Colab A100 $\rightarrow$ `colab download` $\rightarrow$ transfert vers JURECA & soumission via `submission.py` (0 slot GPU Slurm).
+- **Lab `clane9/imagenet-100`** (`blocks.0..11 + head` débloqués, `5 époques`) lancé sur Colab A100 (`task-1254`).
+
 ---
 
 ## 4. Défis techniques priorisés & Stratégies candidates

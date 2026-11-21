@@ -98,6 +98,9 @@
 | #1 | `H_ssd_lora_mod_aug.pt` | `1.112±3.79` | `0.060` | `0.0184` | `4.25` | `0.0287` |
 | #3 | `E_lora_bt_T5.pt` | `0.169±0.33` | `0.507` | `0.0189` | `9.48` | `0.0117` |
 
-### 5.2 Premier test de cohérence du Lab (`200 imgs/classe`, `blocks.10..11`, 5 époques)
-- **Classement reproduit :** `A_npo_mod_aug` (`forget=0.3579`, `retain=0.3991`) **>>** `H_ssd_lora_mod_aug` (`forget=0.0079`, `retain=0.0088`), cohérent avec `0.0843 > 0.0287`.
-- **Correction en cours :** `orig_lab` n'avait atteint que `val_acc = 0.3727` (sous `0.70`) faute de données/blocs débloqués $\implies$ passage à `500 imgs/classe` + `blocks.6..11 + head` sur `8 époques` pour dépasser `val_acc >= 85%`.
+### 5.2 Tests de cohérence du Lab (`lab_cifar100`)
+- **Essai 1 (`200 imgs/classe`, `blocks.10..11`, 5 ép.) :** `orig_lab val_acc = 0.3727` ; `A_npo_mod_aug` (`forget=0.3579`, `retain=0.3991`) **>>** `H_ssd_lora` (`0.0079`, `0.0088`).
+- **Essai 2 (`350 imgs/classe`, `blocks.6..11`, 6 ép., Colab A100) :** [lab_cifar100_v2/coherence_report.json](../../tracks/03_unlearning_v2/results/lab_cifar100_v2/coherence_report.json)
+  - `orig_lab val_acc = 0.4772`, `gold_oracle val_acc = 0.4576` (encore sous `0.70` car `blocks.0..5` gelés sur `32×32` CIFAR-100).
+  - Classement toujours cohérent avec le serveur : **`A_npo_mod_aug`** (`forget=0.3232`, `retain=0.3119`) **>>** **`H_ssd_lora_mod_aug`** (`forget=0.0052`, `retain=0.0327`).
+  - *Suite :* débloquer tout le ViT (`blocks.0..11`) ou utiliser `clane9/imagenet-100` sur Colab A100 pour dépasser `val_acc >= 85%`.

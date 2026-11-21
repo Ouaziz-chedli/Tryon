@@ -9,7 +9,7 @@ import torch.nn.functional as F
 from task_template import DEVICE, IMAGE_SIZE, load_model, preprocess
 
 
-def _load_dataset_tensors(dataset_name: str, max_per_class: int = 500) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]:
+def _load_dataset_tensors(dataset_name: str, max_per_class: int = 350) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]:
     """Load 100-class RGB uint8 tensors [N, 224, 224, 3] for train and val."""
     import torchvision.transforms.functional as TF
 
@@ -62,15 +62,12 @@ def _split_retain_forget(tr_x: torch.Tensor, tr_y: torch.Tensor, seed: int = 42)
     return {"r_x": tr_x[r_cat], "r_y": tr_y[r_cat], "f_x": tr_x[f_cat], "f_y": tr_y[f_cat]}
 
 
-def _train_lab_model(base_model: torch.nn.Module, x: torch.Tensor, y: torch.Tensor, epochs: int = 8, batch_size: int = 128) -> torch.nn.Module:
+def _train_lab_model(base_model: torch.nn.Module, x: torch.Tensor, y: torch.Tensor, epochs: int = 5, batch_size: int = 128) -> torch.nn.Module:
     """Fine-tune a copy of model.pt on (x, y) using identical protocol for orig_lab and gold_lab."""
-    model = copy.deepcopy(base_model).to(DEVICE)
-    for n, p in model.named_parameters():
-        is_upper = n.startswith("blocks.") and int(n.split(".")[1]) >= 6
-        p.requires_grad_(is_upper or n.startswith("norm.") or n.startswith("head."))
-    opt = torch.optim.AdamW([p for p in model.parameters() if p.requires_grad], lr=1.5e-4, weight_decay=1e-4)
+    model = copy.deepcopy(base_model).to(DEVICE).requires_grad_(True)
+    opt = torch.optim.AdamW(model.parameters(), lr=8e-5, weight_decay=1e-4)
     sched = torch.optim.lr_scheduler.CosineAnnealingLR(opt, T_max=epochs)
-    for _ in range(epochs):
+    for ep in range(epochs):
         model.train()
         perm = torch.randperm(len(x))
         for i in range(0, len(x), batch_size):
@@ -82,6 +79,7 @@ def _train_lab_model(base_model: torch.nn.Module, x: torch.Tensor, y: torch.Tens
             loss.backward()
             opt.step()
         sched.step()
+        print(f"  [lab train] epoch {ep + 1}/{epochs} done", flush=True)
     return model.eval()
 
 
@@ -90,7 +88,7 @@ def main() -> int:
     parser.add_argument("--model-path", type=Path, default=Path("model.pt"))
     parser.add_argument("--dataset", type=str, default="clane9/imagenet-100")
     parser.add_argument("--out-dir", type=Path, default=Path("output/lab"))
-    parser.add_argument("--epochs", type=int, default=8)
+    parser.add_argument("--epochs", type=int, default=6)
     args = parser.parse_args()
 
     args.out_dir.mkdir(parents=True, exist_ok=True)
