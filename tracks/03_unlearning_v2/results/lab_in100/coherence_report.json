@@ -1,46 +1,46 @@
 {
   "gold_oracle": {
-    "val_acc": 0.3288,
-    "utility_gate_passed": false,
+    "val_acc": 0.9308,
+    "utility_gate_passed": true,
     "mean_std_score": 1.0,
     "prediction_score": 1.0,
     "forget_score": 1.0,
-    "retain_acc_score": 0.9469,
-    "retain_kl_similarity": 0.8299,
-    "retain_score": 0.7858,
-    "final_score": 0.0
+    "retain_acc_score": 1.0,
+    "retain_kl_similarity": 0.9017,
+    "retain_score": 0.9017,
+    "final_score": 0.9017
   },
   "orig_no_unlearn": {
-    "val_acc": 0.3412,
-    "utility_gate_passed": false,
-    "mean_std_score": 0.0988,
-    "prediction_score": 0.7926,
-    "forget_score": 0.0783,
+    "val_acc": 0.9344,
+    "utility_gate_passed": true,
+    "mean_std_score": 0.3504,
+    "prediction_score": 0.8444,
+    "forget_score": 0.2959,
     "retain_acc_score": 1.0,
     "retain_kl_similarity": 1.0,
     "retain_score": 1.0,
-    "final_score": 0.0
+    "final_score": 0.2959
   },
   "H_ssd_lora_mod_aug": {
-    "val_acc": 0.0344,
-    "utility_gate_passed": false,
-    "mean_std_score": 0.0371,
-    "prediction_score": 0.4661,
-    "forget_score": 0.0173,
-    "retain_acc_score": 0.0884,
-    "retain_kl_similarity": 0.4409,
-    "retain_score": 0.039,
-    "final_score": 0.0
+    "val_acc": 0.9164,
+    "utility_gate_passed": true,
+    "mean_std_score": 0.1068,
+    "prediction_score": 0.7044,
+    "forget_score": 0.0752,
+    "retain_acc_score": 0.9777,
+    "retain_kl_similarity": 0.8803,
+    "retain_score": 0.8607,
+    "final_score": 0.0647
   },
   "A_npo_mod_aug": {
-    "val_acc": 0.2644,
-    "utility_gate_passed": false,
-    "mean_std_score": 0.3649,
-    "prediction_score": 0.7551,
-    "forget_score": 0.2755,
-    "retain_acc_score": 0.8325,
-    "retain_kl_similarity": 0.8566,
-    "retain_score": 0.7131,
-    "final_score": 0.0
+    "val_acc": 0.7044,
+    "utility_gate_passed": true,
+    "mean_std_score": 0.0447,
+    "prediction_score": 0.2404,
+    "forget_score": 0.0107,
+    "retain_acc_score": 0.7627,
+    "retain_kl_similarity": 0.2683,
+    "retain_score": 0.2046,
+    "final_score": 0.0022
   }
 }

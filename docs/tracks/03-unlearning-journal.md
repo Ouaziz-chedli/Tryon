@@ -233,6 +233,21 @@ $$\text{final\_score} = \text{forget\_score} \times \text{retain\_score} \quad \
   - `H_ssd_lora_mod_aug` : `forget_score = 0.0173` × `retain_score = 0.0390` = **`0.0007`**.
 - **Constat `val_acc` (`orig_lab = 0.3412`) :** les indices `0..99` de `clane9/imagenet-100` ne correspondent pas à ceux de `model.pt`, et 5 époques sans augmentation ne suffisent pas pour remonter de 1 % à 85 %. Pour obtenir `val_acc >= 85%` en ~2 min sur A100 : entraîner avec `lr` différencié (`head` à `1e-3`, backbone à `5e-5`) sur `10 époques` + augmentations de base (`hflip` + `RandomResizedCrop`).
 
+### 2026-11-21 (21h04–21h31) — Diagnostic `val_acc`, CLI JURECA & Lab ImageNet-100 validé à **`val_acc = 93.4 %`**
+- **Diagnostic racine sur `model.pt` + `clane9/imagenet-100` :**
+  1. `ctrl` et `val` n'étaient pas mélangés (`ctrl` = classes `0..49`, `val` = classes `50..99`).
+  2. Même avec un split interne du `train` (`heldout_from_train`) et en 2 phases (linear probe -> fine-tuning complet 10 ép., `task-1353`/`task-1358`/`task-1364`), `model.pt` plafonne à `0.3540` (linear probe) / `0.4016` (full FT) — il ne possède pas de features généralistes ImageNet-1k.
+- **Fix dans [build_lab.py](../../tracks/03_unlearning_v2/lab/build_lab.py) :**
+  - Cache de `lab_splits.pt` + mélange déterministe (`seed=42`) de `ctrl`/`val` sur toutes les 100 classes.
+  - Option `--init-mode pretrained` : initialise `build_model()` depuis `vit_base_patch16_224` pré-entraîné ImageNet-1k (`LayerScale .gamma = 1.0`).
+  - En 5 epochs (`task-1437`), convergence à **`orig_lab train_acc = 0.9981`** et **`gold_lab train_acc = 0.9983`**, sauvegardés une fois pour toutes sur `track3`.
+- **Résultats `validate_lab.py` (`task-1445`, gate `>= 0.70` PASSÉE pour tous) :**
+  - **`gold_oracle`** : `val_acc = 0.9308`, `forget = 1.0000`, `retain = 0.9017`, **`final = 0.9017`**
+  - **`orig_no_unlearn`** : `val_acc = 0.9344`, `forget = 0.2959`, `retain = 1.0000`, **`final = 0.2959`**
+  - **`H_ssd_lora_mod_aug`** : `val_acc = 0.9164`, `forget = 0.0752`, `retain = 0.8607`, **`final = 0.0647`**
+  - **`A_npo_mod_aug`** : `val_acc = 0.7044`, `forget = 0.0107`, `retain = 0.2046`, **`final = 0.0022`** (trop agressif sur `orig_lab` avec `LayerScale=1.0`, détruit `retain_kl_similarity = 0.2683`).
+- **Infra JURECA :** création et commit (`efbdbf0`) de [scripts/jureca_status.py](../../scripts/jureca_status.py) (monitoring live par team, vérification du slot unique `TRYON`, `--all`, `--strict`, `--json`, `--watch`), documenté dans [README.md](../../README.md).
+
 ---
 
 ## 4. Défis techniques priorisés & Stratégies candidates
