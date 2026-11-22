@@ -480,6 +480,14 @@ $$\text{final\_score} = \text{forget\_score} \times \text{retain\_score} \quad \
        - **Plafonner la ré-acquisition sur la classe top-1 ($y_i$)** via un *ceiling* (`CE_i >= 0.65`, soit $p(y_i|x_i) \le 0.52$) : dès que les liaisons générales de la classe sont restaurées, le gradient top-1 s'annule.
      - **Garantie par goulot d'étranglement informationnel (Information Bottleneck) :** une LoRA de rang $r = 4$ n'a mathématiquement pas la capacité de re-mémoriser `3 500` exceptions individuelles (`CE = 0.0003`), elle ne peut restaurer que **les liaisons visuelles partagées à l'échelle de la classe** — ce qui remonte `IntraAcc` sur les images faciles tout en laissant les détails d'instances oubliés !
 
+### 2026-11-22 (01h38–01h55) — Percée majeure de la `Piste H` (Round 1, 4 candidats sur `track3_h`) : `W_SEL` passe de `0.5565` à **`0.6108`** & Soumission `#10` (`H4_h123_f6_ce125.pt`)
+- **Résultats complets du Round 1 de la cellule autonome `Piste H` ([03-unlearning-track-h-journal.md](03-unlearning-track-h-journal.md)) :**
+  1. **`H4_h123_f6_ce125` (`blocks.6..11`, H1+H2+H3) : `W_SEL = 0.6108 ± 0.026` (Nouveau Record #1)** — remonte **`IntraAcc` de `73.3 %` à `81.9 %` (+8.6 pts !)** avec `InterAcc = 99.8 %` (`InterKL = 0.0234`), `Gap50 = +1.73`, et sur le checkpoint complet : **`CE = 2.127 ± 2.10` ($\mu+\sigma = 4.23$), `p50 = 1.468`, `>95% = 0.14`, `ProxyKL = 0.0409`**.
+  2. **`H1_h1h2_f8_ce125` (`blocks.8..11`, H1+H2) : `W_SEL = 0.6041 ± 0.018` (#2)** — **`Gap50 = +2.06`**, `IntraAcc = 76.8 %`, `InterAcc = 99.9 %` (`InterKL = 0.0199`), Full `CE = 1.676 ± 1.93` ($\mu+\sigma = 3.61$), `p50 = 0.912`, `>95% = 0.19`, **`ProxyKL = 0.0325`**.
+  3. **`H2_h123_f8_ce145` (`blocks.8..11`, H1+H2+H3) : `W_SEL = 0.6023 ± 0.026` (#3)** — `Gap50 = +1.94`, `IntraAcc = 78.2 %`, `InterAcc = 99.9 %` (`InterKL = 0.0215`), Full `CE = 1.665 ± 1.79` ($\mu+\sigma = 3.46$), `p50 = 1.010`, **`>95% = 0.15`**, **`ProxyKL = 0.0324`**.
+  4. **`H3_h1234_circuit_f8` (`64` portes logiques `IF/THEN` dans `blocks.11.mlp`) :** le détecteur `IF` a éteint **`99 %` des images oubliées (`>95% = 0.01`)** avec un écart `Gap50 = +6.92` tout en laissant les 30 autres classes à **`InterAcc = 99.7 %` (`InterKL = 0.0545`)**, mais le gain `THEN` (`0.8 / LayerScale`) était ~15× trop fort (`CE = 10.61`, `IntraAcc = 37.5 %`).
+- **Soumission `#10` lancée (`01h55`, `task-2401`) :** **`H4_h123_f6_ce125.pt`** (`W_SEL = 0.6108 ± 0.026`).
+
 ---
 
 ## 4. Défis techniques priorisés & Stratégies candidates

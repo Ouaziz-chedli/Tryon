@@ -57,3 +57,21 @@ Tous les candidats de la **Piste H** doivent être évalués avec **exactement l
 
 ### 2026-11-22 (01h35) — Initialisation de la cellule autonome `Piste H` (`h-lead` + `h-exec`)
 - Création du journal dédié et lancement du binôme `h-lead` (`gemini-4-hydrogen-high`) + `h-exec` (`gemini-4-hydrogen-medium`).
+
+### 2026-11-22 (01h38–01h55) — Round 1 `Piste H` (4 candidats, `track3_h` A100 Colab) : Record battu à **`W_SEL = 0.6108 ± 0.026`**
+- **Implémentation ([track_h.py](../../tracks/03_unlearning_v2/methods/track_h.py), [run_track_h.py](../../tracks/03_unlearning_v2/run_track_h.py), [test_track_h.py](../../tracks/03_unlearning_v2/tests/test_track_h.py)) :**
+  - **H1 :** Gouverneur de vitesse par classe (`class_ce_ema`) + boost sur les images têtues (`ce_i < 0.15`) + projection orthogonale du gradient de `head.weight` contre le prototype initial ($g_c \perp w_{0,c}$ avec $\alpha_{\text{proto}} \in \{0.75, 0.80\}$).
+  - **H2 :** Recalibrage dynamique temps réel de la conductance $g_i(t) = \text{EMA}(|\nabla_f|) / (\text{EMA}(|\nabla_r|) + \epsilon)$ tous les 15 steps + rollback sélectif ($\tau = 0.25, \rho = 0.25$).
+  - **H3 :** Contrôle direct de `LayerScale .gamma` (`gamma_lr_mult = 3.0`, bornage relatif `±50 %`).
+  - **H4 :** `compile_if_then_mlp_gates` (`64` neurones MLP dormants de `blocks.11` programmés par k-means sur les vecteurs `CLS` des images têtues avec seuil quantile `0.995` sur le `retain`).
+- **Tableau comparatif complet du Round 1 (`track_h_round1.json`, session `track3_h` stoppée après rapatriement des 3 meilleurs `.pt`) :**
+
+| Rang | Candidat `Piste H` | **Score Pondéré `W_SEL ± std`** | **3-Folds `F_raw` / `F_alt`** | **3-Folds `Gap50`** | **3-Folds `IntraAcc`** | **3-Folds `InterAcc` (`InterKL`)** | **Full `.pt` `CE mean ± std` ($\mu+\sigma$)** | **Full `p50` (`>95%`)** | **Full `ProxyKL` (`dTheta`)** |
+| :---: | :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
+| *Réf* | *`AT_ce1.00_b1.8_f6` (`#9` = `0.1193`)* | *`0.5565 ± 0.019`* | *`2.61` / `2.74`* | *`+1.47`* | *`73.3 %`* | *`99.8 %` (`0.0312`)* | *`1.909 ± 2.05` (`3.96`)* | *`1.214` (`0.19`)* | *`0.0486` (`4.61`)* |
+| **1** | **`H4_h123_f6_ce125`** | **`0.6108 ± 0.026` (+9.8 % !)** | **`2.53` / `2.63`** | **`+1.73`** | **`81.9 %` (+8.6 pts !)** | **`99.8 %` (`0.0234`)** | **`2.127 ± 2.10` (`4.23`)** | **`1.468` (`0.14`)** | **`0.0409` (`6.27`)** |
+| **2** | **`H1_h1h2_f8_ce125`** | **`0.6041 ± 0.018`** | **`3.09` / `3.18`** | **`+2.06`** | **`76.8 %`** | **`99.9 %` (`0.0199`)** | **`1.676 ± 1.93` (`3.61`)** | **`0.912` (`0.19`)** | **`0.0325` (`5.78`)** |
+| **3** | **`H2_h123_f8_ce145`** | **`0.6023 ± 0.026`** | **`2.91` / `3.00`** | **`+1.94`** | **`78.2 %`** | **`99.9 %` (`0.0215`)** | **`1.665 ± 1.79` (`3.46`)** | **`1.010` (`0.15`)** | **`0.0324` (`5.47`)** |
+| **4** | `H3_h1234_circuit_f8` *(64 portes `IF/THEN`)* | `0.0000`* *(gate Intra < 55%)* | `16.42` / `15.05` | **`+6.92` (!)** | `37.5 %` | **`99.7 %` (`0.0545`)** | `10.608 ± 8.65` | `8.692` (**`0.01`**) | `0.2179` (`321.0`) |
+
+- **Action :** **`H4_h123_f6_ce125.pt`** (`W_SEL = 0.6108 ± 0.026`, `IntraAcc = 81.9 %`, `>95% = 0.14`, `ProxyKL = 0.0409`, $\mu+\sigma = 4.23$) est soumis en **`#10`** sur le serveur d'évaluation (`task-2401`).
