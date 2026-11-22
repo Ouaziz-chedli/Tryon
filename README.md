@@ -15,7 +15,13 @@ Full experiment log (24 server probes, 6 falsified hypotheses, the Adam invarian
 
 **Track 2 Model Equality:** 33 black-box LLM endpoints audited under a 100-responses/endpoint budget — discriminative per-pair probes (quantization fingerprints, LoRA fingerprints) + family pre-clustering: [tracks/02_equality/](tracks/02_equality/), answers in `answers.jsonl`, methodology in [docs/tracks/02-model-equality.md](docs/tracks/02-model-equality.md).
 
-**Track 1 Watermark Localization:** methodology and experiments in [docs/tracks/01-watermark-localization.md](docs/tracks/01-watermark-localization.md).
+**Track 1 Watermark Localization:** leaderboard **0.66** (27th, submitted 0.6544) — per-method FPN/ResUNet heads on decoder feature maps correlated with the known message + synthetic data from the provided embedders (holes, transplants, outpainting):
+1. **Signal-first segmentation:** multi-scale decoder bit-agreement maps (`ms_maps`) + StegaStamp 13×13 contribution maps feed light FPN/ResUNet heads toward `128×128` (BCE+Dice, 5–7-fold CV, hflip TTA) — OOF mIoU ss 0.73 / ps 0.63 / tm 0.61 — [tracks/01_watermark/train_v5.py](tracks/01_watermark/train_v5.py).
+2. **Decoder-verified rectangle search:** ~25 % of partial watermarks are rectangles; hierarchical coarse→fine search for the box maximizing bit-accuracy, refined by edge-tracing to the minimal decodable box (`bbox_v7`) — [tracks/01_watermark/rect_search_v3.py](tracks/01_watermark/rect_search_v3.py), pure-numpy core + tests in [tracks/01_watermark/trace_core.py](tracks/01_watermark/trace_core.py).
+3. **Rect/hole specialists + gated ensemble:** rect-only and hole specialists blended under `full_acc` gates, per-regime weights, nested-CV dynamic threshold, confidence-gated rect blend and end-to-end variant selection — [tracks/01_watermark/postprocess_submit_v6.py](tracks/01_watermark/postprocess_submit_v6.py), [tracks/01_watermark/train_rects.py](tracks/01_watermark/train_rects.py).
+4. **Known bottleneck:** true-rect box mIoU only 0.48–0.57 (vs 0.66 ensemble) — the gap to the top-10 (0.76) is rectangle precision; HF-residue 6-channel StegaStamp specialist in progress.
+
+Methodology and experiments in [docs/tracks/01-watermark-localization.md](docs/tracks/01-watermark-localization.md), architectures in [docs/tracks/01-watermark-architectures.md](docs/tracks/01-watermark-architectures.md).
 
 **Presentation slides:** [slides/TRYON-presentation.pptx](slides/TRYON-presentation.pptx)
 
