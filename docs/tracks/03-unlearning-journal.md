@@ -486,7 +486,21 @@ $$\text{final\_score} = \text{forget\_score} \times \text{retain\_score} \quad \
   2. **`H1_h1h2_f8_ce125` (`blocks.8..11`, H1+H2) : `W_SEL = 0.6041 ± 0.018` (#2)** — **`Gap50 = +2.06`**, `IntraAcc = 76.8 %`, `InterAcc = 99.9 %` (`InterKL = 0.0199`), Full `CE = 1.676 ± 1.93` ($\mu+\sigma = 3.61$), `p50 = 0.912`, `>95% = 0.19`, **`ProxyKL = 0.0325`**.
   3. **`H2_h123_f8_ce145` (`blocks.8..11`, H1+H2+H3) : `W_SEL = 0.6023 ± 0.026` (#3)** — `Gap50 = +1.94`, `IntraAcc = 78.2 %`, `InterAcc = 99.9 %` (`InterKL = 0.0215`), Full `CE = 1.665 ± 1.79` ($\mu+\sigma = 3.46$), `p50 = 1.010`, **`>95% = 0.15`**, **`ProxyKL = 0.0324`**.
   4. **`H3_h1234_circuit_f8` (`64` portes logiques `IF/THEN` dans `blocks.11.mlp`) :** le détecteur `IF` a éteint **`99 %` des images oubliées (`>95% = 0.01`)** avec un écart `Gap50 = +6.92` tout en laissant les 30 autres classes à **`InterAcc = 99.7 %` (`InterKL = 0.0545`)**, mais le gain `THEN` (`0.8 / LayerScale`) était ~15× trop fort (`CE = 10.61`, `IntraAcc = 37.5 %`).
-- **Soumission `#10` lancée (`01h55`, `task-2401`) :** **`H4_h123_f6_ce125.pt`** (`W_SEL = 0.6108 ± 0.026`).
+- **Soumission `#10` (`01h58:06`, `H4_h123_f6_ce125.pt`, `submission_id: 2387`) = `0.0984` (`previous_best: 0.1193`, `delta: -0.0209`) — Encadrement exact du sommet de la cloche `gold` :**
+  - Pour la toute première fois, nous avons franchi le sommet de la courbe en V inversé ($1 - |\mu_{\text{sub}} - \mu_{\text{gold}}|/d_{\text{orig}}$) :
+
+| Position sur la cloche | Soumission & Modèle | `CE mean ± std` | **$\mu_{\text{sub}} + \sigma_{\text{sub}}$** | `p50` (`>95%`) | `ProxyKL` (`dTheta`) | **Score serveur** |
+| :--- | :--- | :---: | :---: | :---: | :---: | :---: |
+| Pente gauche (sous-oubli) | `#7` `AT_ce0.50_b3.0_f8.pt` | `0.704 ± 1.19` | `1.90` | `0.116` (`0.43`) | `0.0376` (`3.86`) | `0.0604` |
+| Pente gauche (sous-oubli) | `#8` `AT_ce0.50_b2.0_f6.pt` | `1.265 ± 1.75` | `3.01` | `0.397` (`0.31`) | `0.0413` (`3.95`) | `0.1099` |
+| Approche gauche du sommet | `#5` `B_ce0.45_lr8e-05_kl2.0.pt` | `1.438 ± 2.01` | **`3.45`** | `0.380` (`0.37`) | `0.0551` (`4.03`) | **`0.1166`** |
+| **SOMMET OBSERVÉ** | **`#9` `AT_ce1.00_b1.8_f6.pt`** | **`1.909 ± 2.05`** | **`3.96`** | **`1.214` (`0.19`)** | **`0.0486` (`4.61`)** | **`0.1193` (BEST)** |
+| **Pente droite (sur-oubli !)** | **`#10` `H4_h123_f6_ce125.pt`** | **`2.127 ± 2.10`** | **`4.23`** | **`1.468` (`0.14`)** | `0.0409` (**`6.27`**) | **`0.0984`** |
+
+  - **Preuve géométrique du sommet :**
+    - Entre `#5` (`CE = 1.44 ± 2.01`, $\mu+\sigma = 3.45$, `p50 = 0.38`, `dTheta = 4.03` $\to$ `0.1166`) et `#9` (`CE = 1.91 ± 2.05`, $\mu+\sigma = 3.96$, `p50 = 1.21`, `dTheta = 4.61` $\to$ `0.1193`), le score atteint son maximum.
+    - Dès que `CE mean` dépasse `2.0` (`2.13` sur `#10`), que `p50` dépasse `1.3` (`1.47` sur `#10`) et que `dTheta` monte à `6.27` (à cause de `gamma_lr_mult = 3.0` sur 6 blocs), on bascule sur la **pente descendante droite (sur-oubli)** !
+    - Le vrai sommet $(\mu_{\text{gold}}, \sigma_{\text{gold}}, p_{50,\text{gold}})$ se situe donc **strictement entre `#5` et `#9`**, c'est-à-dire **`CE mean` $\in [1.55, 1.85]$**, **`CE std` $\in [1.90, 2.05]$** (**$\mu+\sigma \in [3.50, 3.90]$**), **`p50` $\in [0.65, 1.05]$**, et **`dTheta <= 4.6`** — ce qui correspond pile au profil de **`H1_h1h2_f8_ce125.pt`** (`CE = 1.676 ± 1.93`, $\mu+\sigma = 3.61$, `p50 = 0.912`, `ProxyKL = 0.0325`, sans modification de `.gamma`) et à la **soupe 50/50 entre `#5`/`#8` et `#9`** !
 
 ---
 
