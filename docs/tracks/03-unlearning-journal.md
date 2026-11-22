@@ -500,7 +500,19 @@ $$\text{final\_score} = \text{forget\_score} \times \text{retain\_score} \quad \
   - **Preuve géométrique du sommet :**
     - Entre `#5` (`CE = 1.44 ± 2.01`, $\mu+\sigma = 3.45$, `p50 = 0.38`, `dTheta = 4.03` $\to$ `0.1166`) et `#9` (`CE = 1.91 ± 2.05`, $\mu+\sigma = 3.96$, `p50 = 1.21`, `dTheta = 4.61` $\to$ `0.1193`), le score atteint son maximum.
     - Dès que `CE mean` dépasse `2.0` (`2.13` sur `#10`), que `p50` dépasse `1.3` (`1.47` sur `#10`) et que `dTheta` monte à `6.27` (à cause de `gamma_lr_mult = 3.0` sur 6 blocs), on bascule sur la **pente descendante droite (sur-oubli)** !
-    - Le vrai sommet $(\mu_{\text{gold}}, \sigma_{\text{gold}}, p_{50,\text{gold}})$ se situe donc **strictement entre `#5` et `#9`**, c'est-à-dire **`CE mean` $\in [1.55, 1.85]$**, **`CE std` $\in [1.90, 2.05]$** (**$\mu+\sigma \in [3.50, 3.90]$**), **`p50` $\in [0.65, 1.05]$**, et **`dTheta <= 4.6`** — ce qui correspond pile au profil de **`H1_h1h2_f8_ce125.pt`** (`CE = 1.676 ± 1.93`, $\mu+\sigma = 3.61$, `p50 = 0.912`, `ProxyKL = 0.0325`, sans modification de `.gamma`) et à la **soupe 50/50 entre `#5`/`#8` et `#9`** !
+
+### 2026-11-22 (02h17) — 11ᵉ Soumission serveur (`H1_h1h2_f8_ce125.pt`, `submission_id: 2457`) = `0.0813` & Diagnostic Racine Critique (`Piste H` vs `AT` standard)
+- **Résultat serveur (`02h17:00`, `task-2435`) :**
+  - `{"submission_id": 2457, "status": "success", "score": 0.0813, "previous_best": 0.1193, "delta": -0.0381, "improved": false}`
+- **Pourquoi `H4_f6` (`0.0984`) et `H1_f8` (`0.0813`) sont battus sur le serveur par `#9` `AT_ce1.00_b1.8_f6.pt` (`0.1193`), `#5` (`0.1166`) et `#8` `AT_ce0.50_b2.0_f6.pt` (`0.1099`) alors qu'ils gagnaient sur `W_SEL` (`0.6108` et `0.6041`) :**
+  En auditant le code de [track_h.py](../../tracks/03_unlearning_v2/methods/track_h.py) face à nos 11 soumissions serveur, **3 causes structurelles exactes** expliquent l'écart :
+  1. **Bug mathématique dans `H2` (`update_conductance_and_rollback`, L192–203 de `track_h.py`) :**
+     - À $t = 0$, `student == orig_model`, donc le gradient de `KL(orig_p || student(p_x))` est **identiquement nul** ($\nabla D_{\text{KL}}(p \parallel q)|_{q=p} = 0$) ! Diviser `gf / (gr + 1e-8)` à $t=0$ divise par du bruit numérique.
+     - Pis : recalculer et **changer le masque SalUn tous les 15 steps** sur 2 petits batchs aléatoires de 64 images fait tourner les 20 % de poids actifs à chaque période — au bout de 225 steps, **70 à 85 % de tous les poids du backbone ont été modifiés** (brisant l'invariance stricte des 80 % de poids figés de SalUn et faisant exploser `dTheta` à **`5.78 – 6.27`** contre **`3.95 – 4.61`** sur `#8`, `#5`, `#9` !).
+  2. **Étouffement de `head.weight` par `head_lr_mult = 0.5` + `alpha_proto = 0.75–0.80` :**
+     - En bridant les lignes actives de `head.weight`, `H1` artificially gonfle `IntraAcc` dans les folds, mais **force les blocs Transformer partagés (`blocks`) à se tordre 1.5× plus fort (`dTheta = 5.78–6.27`)** pour obtenir la même baisse de CE, ce qui dégrade la représentation générale sur le vrai `validation / control set` caché du serveur !
+  3. **Infériorité systématique de `freeze_until_block = 8` (`f8`) face à `freeze_until_block = 6` (`f6`) sur le serveur :**
+     - Sur 11 soumissions, **100 % des modèles `f8` plafonnent à `<= 0.0813`** (`#7` `AT_f8` = `0.0604`, `#11` `H1_f8` = `0.0813`), tandis que **100 % des modèles `f6` SalUn standard dépassent `0.0984–0.1193`** (`#10` `H4_f6` = `0.0984`, `#8` `AT_f6` = `0.1099`, `#5` `B_f6` = `0.1166`, **`#9` `AT_f6` = `0.1193`**). Répartir la modification sur 6 blocs (`blocks.6..11`) avec un masque SalUn **statique** calculé sur `2 048` images (`compute_tempered_saliency`) déforme beaucoup moins chaque bloc que de tout concentrer sur `blocks.8..11`.
 
 ---
 
