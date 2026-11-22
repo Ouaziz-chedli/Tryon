@@ -555,6 +555,11 @@ $$\text{final\_score} = \text{forget\_score} \times \text{retain\_score} \quad \
 3. **`Techniques Initiales` — Round 1 ([03-unlearning-base-journal.md](03-unlearning-base-journal.md)) :**
    - `AT_ce0.80_b1.9_k20_kl28` (`W_SEL = 0.5694 ± 0.020`, `Full = 1.96 ± 2.09`, soumis en `#14`) et `SOUP_50_050_50_100` (soumission `#13` = **`0.1238` RECORD**). Round 2 (`run_tight_at` + soupes `ORIG`) en cours sur `track3_base`.
 
+### 2026-11-22 (03h50:18) — 14ᵉ Soumission serveur (`AT_ce0.80_b1.9_k20_kl28.pt`, `submission_id: 2766`) = **`0.1197`** (2ᵉ meilleur score)
+- **Résultat serveur (`03h50:18`, `task-2718`) :**
+  - `{"submission_id": 2766, "status": "success", "score": 0.1197, "previous_best": 0.1238, "delta": -0.0041, "improved": false}`
+- **Confirmation du sommet :** `AT_ce0.80_b1.9_k20_kl28.pt` (`CE = 1.96 ± 2.09`, $\mu+\sigma = 4.05$, `p50 = 1.256`, `dTheta = 4.58`) devance `#9` (`0.1193`) et `#5` (`0.1166`), mais reste derrière la soupe 50/50 `#13` (`0.1238`, $\mu+\sigma = 3.84$, `p50 = 1.006`, `dTheta = 4.48`), confirmant l'avantage de la soupe convexe exactement à $\mu+\sigma \approx 3.84$ (`p50 ~ 1.0`). *(Prochain créneau `#15` à **`04h05:18`**.)*
+
 ---
 
 ## 4. Défis techniques priorisés & Stratégies candidates
