@@ -578,6 +578,13 @@ $$\text{final\_score} = \text{forget\_score} \times \text{retain\_score} \quad \
   - `{"submission_id": 2876, "status": "success", "score": 0.1184, "previous_best": 0.1238, "delta": -0.0054, "improved": false}`
 - **Analyse :** `SOUP_50_ce80kl28_50_ce90kl28.pt` (`Full CE = 1.941 ± 2.07`, $\mu+\sigma = 4.01$, `p50 = 1.258`, `ProxyKL = 0.0524`, `dTheta = 4.52`) se place juste à droite du pic `#13` (`3.84 -> 0.1238`) dans la même bande que `#9` (`3.96 -> 0.1193`) et `#14` (`4.05 -> 0.1197`). *(Prochain créneau `#17` à **`04h39:42`**.)*
 
+### 2026-11-22 (04h16–04h32) — Calibration du protocole local (`7f41ffa`), Handoff (`0a1aef8`) & Incident RAM `T4`
+- **Correction des 3 failles du protocole de test local (`7f41ffa`) :**
+  - [selective_benchmark.py](../../tracks/03_unlearning_v2/selective_benchmark.py) : remplacement de la rampe monotone `/ 5.2` et `/ 6.2` dans `score_single_fold` par `_bell_forget_term` centré à `peak_ms = 3.84` (`raw`) / `4.40` (`alt`).
+  - [eval_harness.py](../../tracks/03_unlearning_v2/eval_harness.py) : ajout de `compute_spearman_rank_corr` (`rho_PD`) et `score_server_calibrated_proxy` sur le vrai `.pt` 3 500 images (`Full mu+sig = 3.84`, `p50 = 1.0`, `ProxyKL`, `AbsentKL`, `dTheta <= 4.70`, bonus `rho_PD`). Consigne `#97` diffusée au swarm pour intégration dès les prochains rounds.
+- **Document de Handoff (`0a1aef8`) :** création de [03-unlearning-handoff.md](03-unlearning-handoff.md) récapitulant l'état complet des 4 pistes, des 4 GPUs Colab, du cooldown et du plan d'action `#16+`.
+- **Incident `T4` (`track3_h`) & Quotas (`04h31`) :** le runtime `T4` (~12 Go RAM hôte) a OOM-kill (`rc=-9`) sur Piste H Round 7 après les 3 folds de `R7_1` ; ajout d'un flush JSON + `gc.collect()` incrémental demandé (`#106`) avant relance sur `L4`/`A100` dès qu'un slot Colab se libère. Retour de tout le swarm sur `gemini-4-hydrogen-medium` (`gemini-3.8-flash-medium` pour `monitor`) suite aux `429` sur `claude-sonnet-5-5-*`.
+
 ---
 
 ## 4. Défis techniques priorisés & Stratégies candidates
