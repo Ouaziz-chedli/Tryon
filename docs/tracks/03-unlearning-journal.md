@@ -565,6 +565,14 @@ $$\text{final\_score} = \text{forget\_score} \times \text{retain\_score} \quad \
   - `{"submission_id": 2766, "status": "success", "score": 0.1197, "previous_best": 0.1238, "delta": -0.0041, "improved": false}`
 - **Confirmation du sommet :** `AT_ce0.80_b1.9_k20_kl28.pt` (`CE = 1.96 ± 2.09`, $\mu+\sigma = 4.05$, `p50 = 1.256`, `dTheta = 4.58`) devance `#9` (`0.1193`) et `#5` (`0.1166`), mais reste derrière la soupe 50/50 `#13` (`0.1238`, $\mu+\sigma = 3.84$, `p50 = 1.006`, `dTheta = 4.48`), confirmant l'avantage de la soupe convexe exactement à $\mu+\sigma \approx 3.84$ (`p50 ~ 1.0`). *(Prochain créneau `#15` à **`04h05:18`**.)*
 
+### 2026-11-22 (04h06:40) — 15ᵉ Soumission serveur (`SHRINK_88_AT9.pt`, `submission_id: 2818`) = **`0.1082`** + Lancement Piste SCRUB+R
+- **Résultat serveur (`04h06:40`, `task-2771`) :**
+  - `{"submission_id": 2818, "status": "success", "score": 0.1082, "previous_best": 0.1238, "delta": -0.0156, "improved": false}`
+- **Preuve causale clé :** Bien que `SHRINK_88_AT9.pt` (`0.88 * AT_ce1.00 + 0.12 * ORIG`) détenait notre meilleur `W_SEL = 0.5800 ± 0.006` sur `seed=777` et un `ProxyKL = 0.0353` très bas, son `Full mu+sig = 2.92` (`CE = 1.212 ± 1.71`) le maintient sur la pente gauche de la courbe en cloche (`#8` à `3.01 -> 0.1099`). Conséquence directe pour `#16+` (fenêtre à `04h21:40`) : tout candidat visant à battre `0.1238` doit rester dans **`Full mu+sig ∈ [3.65, 3.90]`** (`p50 ∈ [0.85, 1.15]`), et optimiser `ProxyKL` / `dTheta` / `rho_PD` **à l'intérieur de cette fenêtre**.
+- **Organisation du swarm (`04h06`) :**
+  - Tous les agents actifs (`base-lead`, `base-exec`, `h-lead`, `h-exec`, `i-lead`, `i-lora`, `monitor`, `coordinator`) passés en `gemini-4-hydrogen-medium`.
+  - Lancement du duo **`scrub-lead` + `scrub-exec`** sur **Piste SCRUB+R** (`docs/analyses/03-scrub-machine-unlearning.md` + reprise de `methods/patch_drop_targets.py`), avec un 4ᵉ slot Colab réservé (`track3_scrub --gpu L4`, en parallèle de `track3_i` L4, `track3_base` A100 et `track3_vgt` L4).
+
 ---
 
 ## 4. Défis techniques priorisés & Stratégies candidates
