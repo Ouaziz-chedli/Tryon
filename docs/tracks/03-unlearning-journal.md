@@ -6,6 +6,7 @@
 - Spec officielle : [03-unlearning.md](03-unlearning.md) ([PDF](Unlearning.pdf))
 - Plan d'action & TODO : [03-unlearning-todo.md](03-unlearning-todo.md)
 - Journal spécialisé Piste H (`h-lead` + `h-exec`) : [03-unlearning-track-h-journal.md](03-unlearning-track-h-journal.md)
+- Journal spécialisé Piste I (`i-lora`, *Erase-Then-Heal LoRA*) : [03-unlearning-track-i-journal.md](03-unlearning-track-i-journal.md)
 - Papier analysé : [SCRUB (03-scrub-machine-unlearning.md)](../analyses/03-scrub-machine-unlearning.md)
 - Scripts d'exploration : [explore_unlearning.py](../../scripts/explore_unlearning.py) · [explore_q1b.py](../../scripts/explore_q1b.py)
 
