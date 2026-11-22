@@ -546,6 +546,15 @@ $$\text{final\_score} = \text{forget\_score} \times \text{retain\_score} \quad \
   - Estimation multi-vues `orig_model` sous **Patch-Dropout 45 %** (`16×16`) + miroir (`estimate_patchdrop_gold_logits`), recalibrée vers le sommet serveur ($\mu_{\text{target}} \in [1.65, 1.80]$) en gardant les 99 logits non-cibles intacts (`calibrate_per_image_targets`), puis optimisation directe par image à $T=2$ + NPO borné par échantillon sur la base propre `#9` (`f6`, SalUn statique $t=0$).
   - Mesure de la corrélation de Spearman `spearman_vs_patchdrop` et test sur folds *held-out* `seed=777` (session Colab A100 `track3_pd`).
 
+### 2026-11-22 (03h49) — Synthèse des ablations *held-out* (`seed=777`) des 3 cellules autonomes
+1. **`Piste H` — Rounds 4–6 (`seed=777`, [03-unlearning-track-h-journal.md](03-unlearning-track-h-journal.md)) :**
+   - *Round 4 (1-facteur contre `#9` `ABL_0 = 0.5505 ± 0.028`) :* `ABL_2_plus_H1_gov` (`0.5613 ± 0.012`, `>95% = 0.09`), `ABL_1_plus_H1_ortho` (`0.5528 ± 0.028`, `IntraAcc +1.3 pt`), `ABL_3_plus_H2_damp` (`0.5117 ± 0.067` — **écarté**).
+   - *Rounds 5–6 (`weights.mean().clamp_min(1.0)`) :* `R5_h1gov_ortho25` (`W_SEL = 0.5715 ± 0.004`, **variance inter-folds ÷ 7**, `ProxyKL = 0.0438`, `dTheta = 4.43`, Full `1.15 ± 1.57`) et `R6_h1gov_ortho25_ce125` (`W_SEL = 0.5619 ± 0.008`, **`ProxyKL = 0.0359`**, `AbsKL = 0.0230`, **`dTheta = 3.99`**).
+2. **`Piste I` — Round 3 (`seed=777`, [03-unlearning-track-i-journal.md](03-unlearning-track-i-journal.md)) :**
+   - *Ablation 1-facteur Phase 2 LoRA (`I3R_4_lora_r8` vs `I3R_1_p1only`) :* la LoRA rang 8 réduit **`ProxyKL` de `-43,2 %`** (`0.1159 -> 0.0658`) et **`AbsKL` de `-41,5 %`**, augmente **`IntraAcc` de `+7,7 pts`** (`75,3 % -> 83,0 %`), garde `InterAcc = 100,0 %` (`InterKL = 0.0201`) et `>95% = 0.092` à `dTheta` constant (`5.78 -> 5.80`). Round 4 préparé (`phase1_max_dtheta <= 4.30` + soupes `I3R_4 + orig`).
+3. **`Techniques Initiales` — Round 1 ([03-unlearning-base-journal.md](03-unlearning-base-journal.md)) :**
+   - `AT_ce0.80_b1.9_k20_kl28` (`W_SEL = 0.5694 ± 0.020`, `Full = 1.96 ± 2.09`, soumis en `#14`) et `SOUP_50_050_50_100` (soumission `#13` = **`0.1238` RECORD**). Round 2 (`run_tight_at` + soupes `ORIG`) en cours sur `track3_base`.
+
 ---
 
 ## 4. Défis techniques priorisés & Stratégies candidates

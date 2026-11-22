@@ -122,6 +122,55 @@ Implémentation dans [track_h.py](../../tracks/03_unlearning_v2/methods/track_h.
   3. Sur `R3_f6_ce090_ap20_h4`, `dTheta` atteint **`107.80`** malgré le garde-fou `delta_proxy_kl <= 0.0015`, car `fc1.bias = -s * tau_k` (avec `norm2` de norme `~27`) crée un saut de biais non borné dans `fc1`.
   4. **Correction méthodologique (suite à la revue d'inspecteur) :** `W_SEL` est un **diagnostic local de sélectivité**, pas le score officiel du serveur (`gold` caché + copies altérées cachées + `val_acc >= 70%`). L'inversion entre `#10`/`#11` (`W_SEL = 0.6108 / 0.6041` $\to$ serveur `0.0984 / 0.0813`) et `#9` (`W_SEL = 0.5565` $\to$ serveur **`0.1193`**) confirme que seul le **score serveur** fait foi, et que toute affirmation causale sur H1/H2/H3 nécessite des **ablations *one-factor-at-a-time*** à hyperparamètres constants et des folds de test jamais vus pendant la sélection.
 
+### 2026-11-22 (02h56) — Round 4 `Piste H` : Ablations 1-Facteur sur Folds *Held-Out* (`seed=777`, `alt_seed=877`)
+
+Évaluation contrôlée *one-factor-at-a-time* contre la réplique exacte de `#9` (`ABL_0_baseline_AT` = `AT_ce1.00_b1.8_f6`, `seed=777` jamais vu en sélection, `track_h_round4.json`, session `track3_h` stoppée) :
+
+| Candidat Ablation (`seed=777`) | **Score Pondéré `W_SEL ± std`** | **3-Folds `F_raw` / `F_alt`** | **3-Folds `Gap50`** | **3-Folds `IntraAcc`** | **3-Folds `InterAcc` (`InterKL`)** | **Full `.pt` `CE mean ± std` ($\mu+\sigma$)** | **Full `p50` (`>95%`)** | **Full `ProxyKL` (`AbsKL`, `dTheta`)** |
+| :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
+| `ABL_0_baseline_AT` *(réplique exacte `#9`)* | `0.5505 ± 0.028` | `2.82` / `2.99` | `+1.47` | `69.5 %` | `99.9 %` (`0.0246`) | `1.909 ± 2.05` (`3.96`) | `1.214` (`0.19`) | `0.0486` (`0.0304`, `4.61`) |
+| `ABL_1_plus_H1_ortho` *(`+ alpha_proto=0.25`)* | `0.5528 ± 0.028` | `2.79` / `2.95` | `+1.48` | `70.8 %` | `99.9 %` (`0.0246`) | `1.955 ± 2.12` (`4.08`) | `1.213` (`0.20`) | `0.0497` (`0.0319`, `4.71`) |
+| **`ABL_2_plus_H1_gov`** *(`+ gov + stuck_boost=1.5`)* | **`0.5613 ± 0.012`** | `2.40` / `2.57` | `+1.39` | **`72.4 %`** | `99.9 %` (`0.0313`) | `1.970 ± 1.71` (`3.68`) | `1.598` (`0.09`) | `0.0648` (`0.0412`, `4.80`) |
+| `ABL_3_plus_H2_damp` *(`+ H2 damp intra-masque`)* | `0.5117 ± 0.067` | `2.98` / `3.15` | `+1.46` | `68.3 %` | `99.8 %` (`0.0313`) | `1.822 ± 1.93` (`3.75`) | `1.175` (`0.17`) | **`0.0422`** (`0.0272`, **`4.40`**) |
+
+**Conclusions causales rigoureuses (Round 4) :**
+1. **Reproductibilité exacte :** `ABL_0_baseline_AT` reproduit `#9` à l'identique sur les 3 500 images (`1.909 ± 2.05`, `ProxyKL = 0.0486`, `dTheta = 4.61`) et score `0.5505 ± 0.028` sur `seed=777`.
+2. **Effet isolé de H1 Ortho (`alpha_proto = 0.25`) :** gain faible mais systématique sur les 3 folds (`W_SEL +0.0023`, `IntraAcc +1.3 pts`) sans dégrader `InterKL` (`0.0246`), pour `+0.10` de `dTheta` (`4.71`).
+3. **Effet isolé de H1 Gov (`class_ce_ema` + `stuck_boost = 1.5`) :** divise la variance inter-folds par $2.3\times$ (`std = 0.0124` vs `0.0278`), augmente `IntraAcc` (`+2.9 pts`) et réduit `>95%` de moitié (`0.19 -> 0.09`, $\mu+\sigma = 3.68$). **Limitation identifiée dans le code :** `weights = weights / weights.mean().clamp_min(1e-4)` ([track_h.py](../../tracks/03_unlearning_v2/methods/track_h.py#L142)) re-normalise même après le masque `(ce_i < tgt)`, ce qui multiplie le gradient effectif de `loss_f` par $1 / f_{\text{active}} \approx 2.5\times$ par rapport à `retain_kl_weight` et fait monter `ProxyKL` à `0.0648`. Remplacer par `weights.mean().clamp_min(1.0)` (ne jamais amplifier au-delà de $1\times$) est le correctif naturel si une suite est demandée.
+4. **Effet isolé de H2 Damp (conductance intra-masque sans rotation) :** réduit `ProxyKL` (`0.0422`) et `dTheta` (`4.40`), mais déstabilise le `fold 0` (`0.4354`, `IntraAcc = 56.0 %`, `std = 0.067`). Non retenu seul.
+
+### 2026-11-22 (03h09) — Round 5 `Piste H` : Correctif `clamp_min(1.0)` sur H1 Gov (`seed=777`, `W_SEL = 0.5715 ± 0.004`)
+
+Test 1-facteur du correctif `weights.mean().clamp_min(1.0)` ([track_h.py](../../tracks/03_unlearning_v2/methods/track_h.py#L142)) sur les mêmes folds *held-out* (`seed=777`, `alt_seed=877`, `track_h_round5.json`, session `track3_h` stoppée) :
+
+| Candidat (`seed=777`) | **Score Pondéré `W_SEL ± std`** | **3-Folds `F_raw` / `F_alt`** | **3-Folds `Gap50`** | **3-Folds `IntraAcc`** | **3-Folds `InterAcc` (`InterKL`)** | **Full `.pt` `CE mean ± std` ($\mu+\sigma$)** | **Full `p50` (`>95%`)** | **Full `ProxyKL` (`AbsKL`, `dTheta`)** |
+| :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
+| `ABL_0_baseline_AT` *(`#9`)* | `0.5505 ± 0.028` | `2.82` / `2.99` | `+1.47` | `69.5 %` | `99.9 %` (`0.0246`) | `1.909 ± 2.05` (`3.96`) | `1.214` (`0.19`) | `0.0486` (`0.0304`, `4.61`) |
+| `ABL_2_plus_H1_gov` *(`clamp_min(1e-4)`)* | `0.5613 ± 0.012` | `2.40` / `2.57` | `+1.39` | `72.4 %` | `99.9 %` (`0.0313`) | `1.970 ± 1.71` (`3.68`) | `1.598` (`0.09`) | `0.0648` (`0.0412`, `4.80`) |
+| **`R5_h1gov_fixed`** *(`clamp_min(1.0)`)* | **`0.5711 ± 0.004`** | `2.44` / `2.64` | `+1.36` | `70.9 %` | `99.9 %` (`0.0280`) | `1.200 ± 1.50` (`2.70`) | `0.557` (`0.24`) | **`0.0409`** (`0.0252`, **`4.24`**) |
+| **`R5_h1gov_ortho25`** *(`+ alpha_proto=0.25`)* | **`0.5715 ± 0.004`** | `2.45` / `2.63` | `+1.38` | **`72.1 %`** | `99.9 %` (`0.0286`) | `1.148 ± 1.57` (`2.72`) | `0.401` (`0.30`) | `0.0438` (`0.0286`, `4.43`) |
+
+**Analyse Round 5 :**
+- La correction `clamp_min(1.0)` élimine l'inflation de `ProxyKL` (`0.0648 -> 0.0409`) et de `dTheta` (`4.80 -> 4.24`), tout en conservant le gain de stabilité majeur de H1 Gov (`std = 0.004` vs `0.028`, variance inter-folds réduite d'un facteur `~7x`) et le gain `IntraAcc` de `alpha_proto = 0.25` (`72.1 %` vs `69.5 %`).
+- En contrepartie, sans amplification artificielle `~2.5x`, `target_forget_ce = 1.00` sur `210` pas donne un checkpoint complet plus modéré (`Full CE = 1.15–1.20`, $\mu+\sigma = 2.70–2.72$, en dessous de la zone pic serveur `#5/#9` à $\mu+\sigma \in [3.45, 3.96]$). Si une itération Round 6 est souhaitée pour tester ce mécanisme dans la zone pic serveur, monter simplement `target_forget_ce = 1.25` + `steps = 240` (avec `retain_kl_weight = 2.3`, `l2_weight = 1.6e-3`).
+
+### 2026-11-22 (03h27) — Round 6 `Piste H` (`ce=1.25`, `steps=240`, `seed=777`) : Ultra-Bas `ProxyKL = 0.0350–0.0359` & `dTheta = 3.86–3.99`
+
+Exécution 2-runs sur `track3_h` A100 (`track_h_round6.json`, session `track3_h` stoppée) pour tester l'effet de `target_forget_ce = 1.25, steps = 240, lr = 1.1e-4` avec `clamp_min(1.0)` sur folds *held-out* (`seed=777`) :
+
+| Candidat (`seed=777`) | **Score Pondéré `W_SEL ± std`** | **3-Folds `F_raw` / `F_alt`** | **3-Folds `Gap50`** | **3-Folds `IntraAcc`** | **3-Folds `InterAcc` (`InterKL`)** | **Full `.pt` `CE mean ± std` ($\mu+\sigma$)** | **Full `p50` (`>95%`)** | **Full `ProxyKL` (`AbsKL`, `dTheta`)** |
+| :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
+| `ABL_0_baseline_AT` *(`#9`)* | `0.5505 ± 0.028` | `2.82` / `2.99` | `+1.47` | `69.5 %` | `99.9 %` (`0.0246`) | `1.909 ± 2.05` (`3.96`) | `1.214` (`0.19`) | `0.0486` (`0.0304`, `4.61`) |
+| `R5_h1gov_fixed` *(`ce=1.00`)* | **`0.5711 ± 0.004`** | `2.44` / `2.64` | `+1.36` | `70.9 %` | `99.9 %` (`0.0280`) | `1.200 ± 1.50` (`2.70`) | `0.557` (`0.24`) | `0.0409` (`0.0252`, `4.24`) |
+| `R5_h1gov_ortho25` *(`ce=1.00`)* | **`0.5715 ± 0.004`** | `2.45` / `2.63` | `+1.38` | **`72.1 %`** | `99.9 %` (`0.0286`) | `1.148 ± 1.57` (`2.72`) | `0.401` (`0.30`) | `0.0438` (`0.0286`, `4.43`) |
+| `R6_h1gov_ce125` *(`ce=1.25`)* | `0.5608 ± 0.010` | `2.70` / `2.90` | `+1.46` | `68.0 %` | `99.9 %` (`0.0303`) | `1.191 ± 1.49` (`2.68`) | `0.560` (`0.23`) | **`0.0350`** (**`0.0215`**, **`3.86`**) |
+| `R6_h1gov_ortho25_ce125` | `0.5619 ± 0.008` | `2.70` / `2.89` | `+1.48` | `69.1 %` | `99.9 %` (`0.0314`) | `1.227 ± 1.55` (`2.77`) | `0.559` (`0.24`) | **`0.0359`** (**`0.0230`**, **`3.99`**) |
+
+**Synthèse finale Piste H (Rounds 1–6) :**
+- **Ce qui est validé causalement sur `seed=777` :** le couple **H1 Gov (`class_ce_ema` + `stuck_boost=1.5` avec `clamp_min(1.0)`) + H1 Ortho (`alpha_proto=0.25`)** sur `freeze_until_block=6` et masque SalUn statique ($t=0$) bat `ABL_0` (`#9`) sur `W_SEL` (`0.5715 ± 0.004` vs `0.5505 ± 0.028`), réduit la variance inter-folds d'un facteur **$7\times$**, améliore `IntraAcc` (`72.1 %` vs `69.5 %`) et réduit `ProxyKL` (`0.0359–0.0438` vs `0.0486`) et `dTheta` (`3.99–4.43` vs `4.61`).
+- **Ce qui a été écarté :** la rotation de masque H2 (`dTheta = 5.78–6.27`, `#10/#11` négatifs sur serveur), `H2 damp` seul (`std = 0.067`), `stuck_t4_weight` ($T=4$, explosion `InterKL`), et `H4` (`dTheta = 107.8–321.0`).
+- **Comparaison honnête vs `#8`/`#9` :** `R6_h1gov_ortho25_ce125.pt` (`Full CE = 1.227 ± 1.55`, `mu+sig = 2.77`, `ProxyKL = 0.0359`, `dTheta = 3.99`) et `R5_h1gov_ortho25.pt` (`W_SEL = 0.5715 ± 0.004`, `ProxyKL = 0.0438`, `dTheta = 4.43`) restent légèrement en deçà du niveau `mu+sig` de `#8` (`3.01`) / `#9` (`3.96`) sur le checkpoint complet (le contrôleur `_snapshot_score` de `auto_tune_4gpu.py` sélectionnant le snapshot précoce à `ProxyKL ~ 0.036`), mais offrent le meilleur compromis `ProxyKL / AbsKL / dTheta / stabilité` de Piste H.
+
 ### 2026-11-22 (02h40) — Verdict & Plan d'Ablation Contrôlée (*One-Factor-at-a-Time* sur `seed=777`)
 - **Verdict scientifique :** ne pas abandonner la `Piste H` (signal local réel au Round 1 : `W_SEL = 0.6108`, `IntraAcc = 81.9 %`), mais ne pas revendiquer `H1/H2/H3` comme mécanismes validés avant d'avoir isolé leur effet individuel contre `#9` (`AT_ce1.00_b1.8_f6`) et calibré sur le score serveur.
 - **Protocole Round 4 (Ablation pure à 1 facteur à la fois sur folds *held-out* `seed=777`) :**
