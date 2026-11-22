@@ -18,6 +18,8 @@ Full experiment log (24 server probes, 6 falsified hypotheses, the Adam invarian
 
 **Track 1 Watermark Localization:** methodology and experiments in [docs/tracks/01-watermark-localization.md](docs/tracks/01-watermark-localization.md).
 
+**Presentation slides:** [slides/TRYON-presentation.pptx](slides/TRYON-presentation.pptx)
+
 ## Navigation rapide
 
 - **Index complet de la documentation :** [docs/README.md](docs/README.md)
