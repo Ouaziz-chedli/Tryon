@@ -571,7 +571,12 @@ $$\text{final\_score} = \text{forget\_score} \times \text{retain\_score} \quad \
 - **Preuve causale clé :** Bien que `SHRINK_88_AT9.pt` (`0.88 * AT_ce1.00 + 0.12 * ORIG`) détenait notre meilleur `W_SEL = 0.5800 ± 0.006` sur `seed=777` et un `ProxyKL = 0.0353` très bas, son `Full mu+sig = 2.92` (`CE = 1.212 ± 1.71`) le maintient sur la pente gauche de la courbe en cloche (`#8` à `3.01 -> 0.1099`). Conséquence directe pour `#16+` (fenêtre à `04h21:40`) : tout candidat visant à battre `0.1238` doit rester dans **`Full mu+sig ∈ [3.65, 3.90]`** (`p50 ∈ [0.85, 1.15]`), et optimiser `ProxyKL` / `dTheta` / `rho_PD` **à l'intérieur de cette fenêtre**.
 - **Organisation du swarm (`04h06`) :**
   - Tous les agents actifs (`base-lead`, `base-exec`, `h-lead`, `h-exec`, `i-lead`, `i-lora`, `monitor`, `coordinator`) passés en `gemini-4-hydrogen-medium`.
-  - Lancement du duo **`scrub-lead` + `scrub-exec`** sur **Piste SCRUB+R** (`docs/analyses/03-scrub-machine-unlearning.md` + reprise de `methods/patch_drop_targets.py`), avec un 4ᵉ slot Colab réservé (`track3_scrub --gpu L4`, en parallèle de `track3_i` L4, `track3_base` A100 et `track3_vgt` L4).
+  - Lancement du duo **`scrub-lead` + `scrub-exec`** sur **Piste SCRUB+R** (`docs/analyses/03-scrub-machine-unlearning.md` + reprise de `methods/patch_drop_targets.py`), avec un 4ᵉ slot Colab réservé (`track3_scrub --gpu L4`, en parallèle de `track3_i` L4, `track3_base` A100 et `track3_h` T4).
+
+### 2026-11-22 (04h24:42) — 16ᵉ Soumission serveur (`SOUP_50_ce80kl28_50_ce90kl28.pt`, `submission_id: 2876`) = **`0.1184`**
+- **Résultat serveur (`04h24:42`, `task-2920`) :**
+  - `{"submission_id": 2876, "status": "success", "score": 0.1184, "previous_best": 0.1238, "delta": -0.0054, "improved": false}`
+- **Analyse :** `SOUP_50_ce80kl28_50_ce90kl28.pt` (`Full CE = 1.941 ± 2.07`, $\mu+\sigma = 4.01$, `p50 = 1.258`, `ProxyKL = 0.0524`, `dTheta = 4.52`) se place juste à droite du pic `#13` (`3.84 -> 0.1238`) dans la même bande que `#9` (`3.96 -> 0.1193`) et `#14` (`4.05 -> 0.1197`). *(Prochain créneau `#17` à **`04h39:42`**.)*
 
 ---
 
