@@ -447,6 +447,26 @@ $$\text{final\_score} = \text{forget\_score} \times \text{retain\_score} \quad \
   1. **`AT_ce1.00_b1.8_f6.pt` (Rang #1, `W_SEL = 0.5565 ± 0.019`) :** seul candidat « Oubli Fort » qui maintient **`IntraAcc = 73.3 % >= 70 %`** sur les images retenues des classes oubliées tout en multipliant par `3.2×` la médiane d'oubli (`p50 = 1.214` vs `0.380` sur `#5`), en divisant par `2` la fraction saturée (`>95% = 0.19` vs `0.37` sur `#5`) et en gardant `ProxyKL = 0.0486` (`< 0.0551` sur `#5`) et `InterKL = 0.0312`.
   2. **`AT_ce1.40_b1.5_f8.pt` (Rang #2, `W_SEL = 0.5451 ± 0.006`) :** chirurgie `blocks.8..11` avec la plus faible dérive inter-classes de tout le benchmark (**`InterAcc = 99.9 %`**, **`InterKL = 0.0226`**, `ProxyKL = 0.0422`) et une amplitude forte ($\mu+\sigma = 5.55$, `p50 = 1.390`).
 
+### 2026-11-22 (01h36:57) — 9ᵉ Soumission serveur (`AT_ce1.00_b1.8_f6.pt`, `submission_id: 2307`) = **`0.1193` (NOUVEAU RECORD, `improved: true`)**
+- **Résultat serveur (`01h36:57`, `task-2314`) :**
+  - `{"submission_id": 2307, "status": "success", "score": 0.1193, "previous_best": 0.1166, "delta": 0.0027, "improved": true, "message": "New best on this task."}`
+- **Analyse de la courbe à 6 points (`#3` → `#7` → `#2` → `#8` → `#5` → `#9`) :**
+
+| Soumission | Modèle | $\mu_{\text{sub}}$ (`CE mean`) | $\sigma_{\text{sub}}$ (`CE std`) | **Somme $\mu_{\text{sub}} + \sigma_{\text{sub}}$** | `p50` (`>95%`) | `ProxyKL` | **Score serveur** | **Rendement $\frac{\text{Score}}{\mu+\sigma}$** |
+| :---: | :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
+| `#3` | `E_lora_bt_T5.pt` | `0.169` | `0.330` | `0.499` | `0.046` (`0.52`) | `0.0189` | `0.0117` | `0.0234` |
+| `#7` | `AT_ce0.50_b3.0_f8.pt` | `0.704` | `1.195` | `1.899` | `0.116` (`0.43`) | `0.0376` | `0.0604` | `0.0318` |
+| `#2` | `A_npo_mod_aug.pt` | `0.617` | `1.990` | `2.607` | `0.001` (`0.84`) | `0.0366` | `0.0843` | `0.0323` |
+| `#8` | `AT_ce0.50_b2.0_f6.pt` | `1.265` | `1.746` | `3.011` | `0.397` (`0.31`) | `0.0413` | `0.1099` | **`0.0365`** |
+| `#5` | `B_ce0.45_lr8e-05_kl2.0.pt` | `1.438` | `2.010` | `3.448` | `0.380` (`0.37`) | `0.0551` | `0.1166` | `0.0338` |
+| **`#9`** | **`AT_ce1.00_b1.8_f6.pt`** | **`1.909`** | **`2.050`** | **`3.959`** | **`1.214` (`0.19`)** | **`0.0486`** | **`0.1193` (BEST)** | `0.0301` |
+
+- **Enseignement décisif sur le sommet de la courbe (`0.1099` → `0.1166` → `0.1193`) :**
+  1. Le protocole **3-Folds pondéré Intra+Inter-classes** a directement sélectionné notre **nouveau record serveur (`0.1193`)** !
+  2. Regarde l'inflexion du rendement $\frac{\text{Score}}{\mu+\sigma}$ quand $\mu+\sigma$ passe de `3.01` (`0.0365`) à `3.45` (`0.0338`) puis `3.96` (`0.0301`) : la courbe commence à **s'aplatir autour de $\mu+\sigma \in [3.6, 4.1]$** (car `p50 = 1.214` sur `#9` dépasse probablement légèrement la médiane `gold` sur une partie des images exactes, ou `IntraAcc = 73.3 %` commence à effriter légèrement `retain_accuracy` sur le `control set`).
+  3. **Le sweet spot exact révélé par `#8` (`0.1099`), `#5` (`0.1166`) et `#9` (`0.1193`) :**
+     - On veut l'amplitude de `#9` ($\mu+\sigma \in [3.5, 4.1]$, `CE mean` $\in [1.5, 1.9]$, `p50` $\in [0.65, 1.00]$) **MAIS** avec la préservation `retain` et `IntraAcc >= 78 %` de `#8` (`ProxyKL <= 0.038`, `InterKL <= 0.025`, ce qui est exactement l'objectif de la **Piste H** avec la projection orthogonale $\nabla_i - \alpha \bar{\nabla}_c$ et de la soupe 50/50 entre `#8` `AT_ce0.50_b2.0_f6.pt` et `#9` `AT_ce1.00_b1.8_f6.pt` !).
+
 ---
 
 ## 4. Défis techniques priorisés & Stratégies candidates
