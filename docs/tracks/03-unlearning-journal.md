@@ -467,6 +467,18 @@ $$\text{final\_score} = \text{forget\_score} \times \text{retain\_score} \quad \
   3. **Le sweet spot exact révélé par `#8` (`0.1099`), `#5` (`0.1166`) et `#9` (`0.1193`) :**
      - On veut l'amplitude de `#9` ($\mu+\sigma \in [3.5, 4.1]$, `CE mean` $\in [1.5, 1.9]$, `p50` $\in [0.65, 1.00]$) **MAIS** avec la préservation `retain` et `IntraAcc >= 78 %` de `#8` (`ProxyKL <= 0.038`, `InterKL <= 0.025`, ce qui est exactement l'objectif de la **Piste H** avec la projection orthogonale $\nabla_i - \alpha \bar{\nabla}_c$ et de la soupe 50/50 entre `#8` `AT_ce0.50_b2.0_f6.pt` et `#9` `AT_ce1.00_b1.8_f6.pt` !).
 
+### 2026-11-22 (01h49) — Nouvelle piste de réflexion (`Piste I`) : *Erase-Then-Heal* (Oubli Extrême à 100 % puis Réparation Structurelle des Liaisons par LoRA)
+- **Idée directrice (Chef de Brigade) :** au lieu d'essayer de s'arrêter en équilibre instable pendant la descente (où `15–19 %` d'images têtues restent bloquées à `> 95 %` de confiance), **partir d'un extrême (oubli à 100 % des images) puis revenir vers une moyenne saine en ré-injectant les images dans une LoRA pour réparer uniquement les liaisons structurelles sans ré-apprendre la connaissance par cœur**.
+- **Pourquoi cette approche résout un problème fondamental (*SCRUB+R* sans `retain set`) :**
+  1. **Phase 1 — *Total Instance Erasure* (Oubli à 100 %, `>95% -> 0.00`) :**
+     - On pousse l'oubli jusqu'à ce qu'**aucune** des `3 500` images (même les plus têtues) ne garde sa trace mémorisée spécifique ($\text{CE}_{\min} > 0.30$, `frac_gt_95 < 0.03`). À ce stade extrême ($\theta_{\text{extreme}}$), la mémorisation par cœur est détruite à 100 %, mais les liaisons géométriques inter-couches et intra-classes ont été secouées (`IntraAcc` basse).
+  2. **Phase 2 — *Structural LoRA Re-binding* (Ré-injection dans une LoRA de rang faible $r \in \{4, 8\}$ pour réparer les liaisons sans la connaissance d'instance) :**
+     - On gèle $\theta_{\text{extreme}}$ et `head.weight`, et on ouvre uniquement une **LoRA de très faible rang ($r = 4$ ou $8$) sur `blocks.6..11`**.
+     - On ré-injecte les images de `forget_images.npz` (et leurs vues altérées / `PatchMix`) avec un objectif **purement relationnel et plafonné** :
+       - **Réparer les liaisons inter-classes (les 99 logits non-top-1 à $T=3$ et l'alignement des normes internes $L_{\text{at}}$)** par rapport à $\theta_{\text{orig}}$.
+       - **Plafonner la ré-acquisition sur la classe top-1 ($y_i$)** via un *ceiling* (`CE_i >= 0.65`, soit $p(y_i|x_i) \le 0.52$) : dès que les liaisons générales de la classe sont restaurées, le gradient top-1 s'annule.
+     - **Garantie par goulot d'étranglement informationnel (Information Bottleneck) :** une LoRA de rang $r = 4$ n'a mathématiquement pas la capacité de re-mémoriser `3 500` exceptions individuelles (`CE = 0.0003`), elle ne peut restaurer que **les liaisons visuelles partagées à l'échelle de la classe** — ce qui remonte `IntraAcc` sur les images faciles tout en laissant les détails d'instances oubliés !
+
 ---
 
 ## 4. Défis techniques priorisés & Stratégies candidates
