@@ -880,6 +880,10 @@ $$\text{final\_score} = \text{forget\_score} \times \text{retain\_score} \quad \
 - **Incident résolu** : le commit sécurité (retrait des credentials du tracking) + les rebases ont effacé `infra/juelich_ed25519` + `infra/team-access.md` DU DISQUE — récupérés depuis l'historique git (`git show fe5b952^:...`), permissions 600, .gitignore en place. Leur suppression du repo public est maintenue ; les fichiers restent locaux-only.
 - **Livrables organisateurs COMPLETS (~12h05)** : repo public `Ouaziz-chedli/Tryon` (Chef a renommé + posté le lien sur #general), README avec la section 🏆 best-solution + pointeurs code vérifiés (**0 lien cassé sur tout le repo**), slides `TRYON-presentation.pptx` (10 slides, validées, chart natif des records), 3 liens cassés corrigés (lab→lab_kl, pointeur team-access retiré).
 
+### 2026-11-22 (12h20) — CLÔTURE : les 16 tickets tous OUT (meilleur s181 L1 0.227 < record 0.191) — **SCORE FINAL : 0.1283** (`SR21_spread115`, seed 101)
+- **Vague 2 SR23 (s161/s171/s181/s191)** : L1 0.251/0.386/**0.227**/0.397 — aucun miracle. **Bilan de la loterie : 17 tirages au total (s101 record, s202 + 16 nouveaux), le seed 101 était le meilleur ticket de la distribution.** La variance seed (confirmée à Δμ 0.84 sur l'ensemble : μ 1.51 → 2.40) est la plus grande source de dispersion de la recette — mais notre record était déjà sur le quantile supérieur du tirage.
+- **SCORE FINAL : `0.1283`** (submission_id 4222, `SR21_spread115` — gold-bell quantile gates ×1.15 upper-half spread, (μ, σ) = (1.801, 2.16), p50 0.883, ProxyKL 0.046, Δθ 4.64). Progression de la journée : **0.1238 → 0.1283 (+0.0045, +3.6%)** via le pivot gates per-image quantiles. Le cluster est calme (SR22/SR23 COMPLETED), les livrables sont publics (`Ouaziz-chedli/Tryon` + slides + README), la présentation est à 13h00.
+
 ---
 
 ## 4. Défis techniques priorisés & Stratégies candidates
