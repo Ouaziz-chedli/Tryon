@@ -539,6 +539,13 @@ $$\text{final\_score} = \text{forget\_score} \times \text{retain\_score} \quad \
   - **`#13` (`SOUP_50_050_50_100.pt`, $\mu+\sigma = 3.84$, `Full CE = 1.794 ± 2.04`, `p50 = 1.006`, `>95% = 0.21`, `dTheta = 4.48`) $\to$ `0.1238` !**
   - L'interpolation convexe place `Full CE` et `p50` pile sur le sommet de la cloche tout en réduisant le bruit d'entraînement par rapport à un run individuel. *(Prochain créneau `#14` à **`03h44:55`**.)*
 
+### 2026-11-22 (03h35) — Diagnostic `prediction_score ~ 0.19` & Implémentation de l'alignement image-par-image via Patch-Dropout (`patch_drop_targets.py`)
+- **Constat arithmétique :** avec `retain_score ~ 0.92` et `mean_std_score ~ 0.65–0.75` au sommet ($\mu+\sigma = 3.84$), un score final à `0.1238` implique mathématiquement que **`prediction_score` (`1 - KL(p_gold || p_sub) / KL(p_gold || p_orig)` à $T=2$) est bloqué autour de `~0.19`**.
+- **Cause hypothétique :** `NPO` uniforme choisit aléatoirement quelles images oublient en premier (selon l'amplitude locale du gradient) au lieu d'oublier les ~20 % d'images atypiques que `gold` rate tout en préservant les ~80 % d'images typiques que `gold` réussit.
+- **Implémentation ([patch_drop_targets.py](../../tracks/03_unlearning_v2/methods/patch_drop_targets.py), [run_patchdrop_ablation.py](../../tracks/03_unlearning_v2/run_patchdrop_ablation.py), [test_patch_drop_targets.py](../../tracks/03_unlearning_v2/tests/test_patch_drop_targets.py)) :**
+  - Estimation multi-vues `orig_model` sous **Patch-Dropout 45 %** (`16×16`) + miroir (`estimate_patchdrop_gold_logits`), recalibrée vers le sommet serveur ($\mu_{\text{target}} \in [1.65, 1.80]$) en gardant les 99 logits non-cibles intacts (`calibrate_per_image_targets`), puis optimisation directe par image à $T=2$ + NPO borné par échantillon sur la base propre `#9` (`f6`, SalUn statique $t=0$).
+  - Mesure de la corrélation de Spearman `spearman_vs_patchdrop` et test sur folds *held-out* `seed=777` (session Colab A100 `track3_pd`).
+
 ---
 
 ## 4. Défis techniques priorisés & Stratégies candidates
