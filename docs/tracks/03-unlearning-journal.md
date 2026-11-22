@@ -657,7 +657,7 @@ $$\text{final\_score} = \text{forget\_score} \times \text{retain\_score} \quad \
 
 ### Recherche VGT / SCRUB+R (expérimentation isolée)
 - Journal et protocole exploratoire : [[03-unlearning-vgt-journal]].
-- État : implémentation/tests prêts, mais pas de comparaison VGT↔scores serveur réalisée (transfert des checkpoints locaux vers le Colab L4 dédié bloqué). Verdict empirique encore indéterminé ; ne pas confondre proxy VGT et score officiel.
+- État : diagnostic exploratoire du masque exécuté sur L4 ; à 45 %, accord top-1 64,8 % sur 256 images. Aucun checkpoint candidat ni score serveur comparé ; détails et limites : [[03-unlearning-vgt-journal]].
 
 ## 7. Aide pour lire les maths & symboles
 
