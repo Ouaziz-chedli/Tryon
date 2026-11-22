@@ -247,16 +247,14 @@ def benchmark_and_save_candidate(
 
 
 def _strong_candidates() -> list[MethodConfig]:
-    """8 Strong Unlearning candidates (2 per GPU on a 4-GPU JURECA node)."""
+    """6 Strong Unlearning candidates (3 per GPU across 2 Colab A100 instances)."""
     return [
-        MethodConfig(name="AT_ce1.00_b1.8_f6", strategy="salun_npo", steps=225, lr=1.0e-4, npo_beta=1.8, target_forget_ce=1.00, target_ce_upper=1.80, retain_kl_weight=2.2, l2_weight=1.5e-3, salun_keep_ratio=0.20, freeze_until_block=6),
-        MethodConfig(name="AT_ce1.40_b1.5_f6", strategy="salun_npo", steps=225, lr=1.1e-4, npo_beta=1.5, target_forget_ce=1.40, target_ce_upper=2.20, retain_kl_weight=2.2, l2_weight=1.5e-3, salun_keep_ratio=0.20, freeze_until_block=6),
-        MethodConfig(name="AT_ce1.40_b1.5_f8", strategy="salun_npo", steps=225, lr=1.2e-4, npo_beta=1.5, target_forget_ce=1.40, target_ce_upper=2.20, retain_kl_weight=2.2, l2_weight=1.5e-3, salun_keep_ratio=0.20, freeze_until_block=8, head_lr_mult=1.5),
-        MethodConfig(name="AT_ce1.80_b1.2_f6", strategy="salun_npo", steps=240, lr=1.2e-4, npo_beta=1.2, target_forget_ce=1.80, target_ce_upper=2.60, retain_kl_weight=2.2, l2_weight=1.5e-3, salun_keep_ratio=0.25, freeze_until_block=6),
-        MethodConfig(name="AT_ce2.20_b1.0_f6", strategy="salun_npo", steps=240, lr=1.3e-4, npo_beta=1.0, target_forget_ce=2.20, target_ce_upper=3.00, retain_kl_weight=2.5, l2_weight=1.5e-3, salun_keep_ratio=0.25, freeze_until_block=6),
-        MethodConfig(name="TS_ce1.20_u2.40_b1.5_f6", strategy="salun_npo", loss_kind="two_sided_npo", steps=225, lr=1.1e-4, npo_beta=1.5, target_forget_ce=1.20, target_ce_upper=2.40, pullback_weight=0.4, retain_kl_weight=2.2, l2_weight=1.5e-3, salun_keep_ratio=0.25, freeze_until_block=6),
-        MethodConfig(name="TS_ce1.60_u2.80_b1.2_f6", strategy="salun_npo", loss_kind="two_sided_npo", steps=240, lr=1.2e-4, npo_beta=1.2, target_forget_ce=1.60, target_ce_upper=2.80, pullback_weight=0.4, retain_kl_weight=2.2, l2_weight=1.5e-3, salun_keep_ratio=0.25, freeze_until_block=6),
-        MethodConfig(name="TS_ce1.60_u2.80_b1.2_f8", strategy="salun_npo", loss_kind="two_sided_npo", steps=240, lr=1.3e-4, npo_beta=1.2, target_forget_ce=1.60, target_ce_upper=2.80, pullback_weight=0.4, retain_kl_weight=2.2, l2_weight=1.5e-3, salun_keep_ratio=0.25, freeze_until_block=8, head_lr_mult=1.5),
+        MethodConfig(name="AT_ce1.00_b1.8_f6", strategy="salun_npo", steps=210, lr=1.0e-4, npo_beta=1.8, target_forget_ce=1.00, target_ce_upper=1.80, retain_kl_weight=2.2, l2_weight=1.5e-3, salun_keep_ratio=0.20, freeze_until_block=6),
+        MethodConfig(name="AT_ce1.40_b1.5_f8", strategy="salun_npo", steps=210, lr=1.2e-4, npo_beta=1.5, target_forget_ce=1.40, target_ce_upper=2.20, retain_kl_weight=2.2, l2_weight=1.5e-3, salun_keep_ratio=0.20, freeze_until_block=8, head_lr_mult=1.5),
+        MethodConfig(name="AT_ce1.40_b1.5_f6", strategy="salun_npo", steps=210, lr=1.1e-4, npo_beta=1.5, target_forget_ce=1.40, target_ce_upper=2.20, retain_kl_weight=2.2, l2_weight=1.5e-3, salun_keep_ratio=0.20, freeze_until_block=6),
+        MethodConfig(name="AT_ce1.80_b1.2_f6", strategy="salun_npo", steps=225, lr=1.2e-4, npo_beta=1.2, target_forget_ce=1.80, target_ce_upper=2.60, retain_kl_weight=2.2, l2_weight=1.5e-3, salun_keep_ratio=0.25, freeze_until_block=6),
+        MethodConfig(name="TS_ce1.20_u2.40_b1.5_f6", strategy="salun_npo", loss_kind="two_sided_npo", steps=210, lr=1.1e-4, npo_beta=1.5, target_forget_ce=1.20, target_ce_upper=2.40, pullback_weight=0.4, retain_kl_weight=2.2, l2_weight=1.5e-3, salun_keep_ratio=0.25, freeze_until_block=6),
+        MethodConfig(name="TS_ce1.60_u2.80_b1.2_f6", strategy="salun_npo", loss_kind="two_sided_npo", steps=225, lr=1.2e-4, npo_beta=1.2, target_forget_ce=1.60, target_ce_upper=2.80, pullback_weight=0.4, retain_kl_weight=2.2, l2_weight=1.5e-3, salun_keep_ratio=0.25, freeze_until_block=6),
     ]
 
 
