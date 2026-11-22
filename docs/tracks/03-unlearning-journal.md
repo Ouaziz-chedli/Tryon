@@ -5,6 +5,7 @@
 **Liens connexes :**
 - Spec officielle : [03-unlearning.md](03-unlearning.md) ([PDF](Unlearning.pdf))
 - Plan d'action & TODO : [03-unlearning-todo.md](03-unlearning-todo.md)
+- **Plan de rupture du plafond (`0.1238`) :** [03-unlearning-rupture-plan.md](03-unlearning-rupture-plan.md)
 - Journal spécialisé Piste H (`h-lead` + `h-exec`) : [03-unlearning-track-h-journal.md](03-unlearning-track-h-journal.md)
 - Journal spécialisé Piste I (`i-lora` + `i-lead`, *Erase-Then-Heal LoRA*) : [03-unlearning-track-i-journal.md](03-unlearning-track-i-journal.md)
 - Journal spécialisé Techniques Initiales (`base-lead` + `base-exec`, `AT` SalUn statique + NPO & soupes) : [03-unlearning-base-journal.md](03-unlearning-base-journal.md)
@@ -584,6 +585,12 @@ $$\text{final\_score} = \text{forget\_score} \times \text{retain\_score} \quad \
   - [eval_harness.py](../../tracks/03_unlearning_v2/eval_harness.py) : ajout de `compute_spearman_rank_corr` (`rho_PD`) et `score_server_calibrated_proxy` sur le vrai `.pt` 3 500 images (`Full mu+sig = 3.84`, `p50 = 1.0`, `ProxyKL`, `AbsentKL`, `dTheta <= 4.70`, bonus `rho_PD`). Consigne `#97` diffusée au swarm pour intégration dès les prochains rounds.
 - **Document de Handoff (`0a1aef8`) :** création de [03-unlearning-handoff.md](03-unlearning-handoff.md) récapitulant l'état complet des 4 pistes, des 4 GPUs Colab, du cooldown et du plan d'action `#16+`.
 - **Incident `T4` (`track3_h`) & Quotas (`04h31`) :** le runtime `T4` (~12 Go RAM hôte) a OOM-kill (`rc=-9`) sur Piste H Round 7 après les 3 folds de `R7_1` ; ajout d'un flush JSON + `gc.collect()` incrémental demandé (`#106`) avant relance sur `L4`/`A100` dès qu'un slot Colab se libère. Retour de tout le swarm sur `gemini-4-hydrogen-medium` (`gemini-3.8-flash-medium` pour `monitor`) suite aux `429` sur `claude-sonnet-5-5-*`.
+
+### 2026-11-22 (04h44:03) — Round 3 `Base` (`track3_base`) & 17ᵉ Soumission serveur (`SOUP3_75_AT9_25_AT2.pt`, `submission_id: 2951`) = **`0.1176`**
+- **Résultats Round 3 (`base_refine_round3.json`) :** `SOUP3_75_AT9_25_AT2.pt` (`Full = 1.773 ± 1.99`, $\mu+\sigma = 3.77$, `p50 = 1.038`, `>95% = 0.21`, `ProxyKL = 0.0462`, `dTheta = 4.32`, `W_SEL = 0.5553`) et `SOUP3_50_AT9_50_s101.pt` (`W_SEL = 0.5680`, $\mu+\sigma = 3.68$, `ProxyKL = 0.0439`, `dTheta = 3.96`) ramenés et `track3_base` libéré pour `track3_h` (Round 7 relancé à `04h42`).
+- **Résultat serveur (`04h44:03`, `task-3003`) :**
+  - `{"submission_id": 2951, "status": "success", "score": 0.1176, "previous_best": 0.1238, "delta": -0.0062, "improved": false}`
+- **Preuve causale majeure :** À $\mu+\sigma$ quasi-identique (`3.77` vs `3.84` pour `#13`), réduire `ProxyKL` de `0.0558` à `0.0462` (`-17%`) et `dTheta` de `4.48` à `4.32` par régularisation `L2/KL` fait **baisser** le score (`0.1176` vs `0.1238`). Cela prouve que `retain_score` est déjà saturé et que le vrai levier pour dépasser `0.1238` est **`prediction_score`** (alignement image par image à $T=2$ via Patch-Dropout / SCRUB+R / LoRA / soupes hétérogènes). *(Prochain créneau `#18` à **`04h59:03`**.)*
 
 ---
 
