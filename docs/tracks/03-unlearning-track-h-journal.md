@@ -117,7 +117,15 @@ Implémentation dans [track_h.py](../../tracks/03_unlearning_v2/methods/track_h.
 | **4** | `R3_f6_ce100_ap15` | `0.3017 ± 0.121` | `66.9 %` | `+1.09` | `99.0 %` (`0.1372`) | `1.114 ± 1.25` | `0.672` (`0.152`) | `0.0606` (`4.73`) |
 
 - **Constat honnête (résultat négatif) :**
-  1. Tous les candidats du Round 3 sont nettement inférieurs au Round 1 (`0.602–0.611`) et à la baseline `AT` (`0.5565`) sur `W_SEL`, avec une dégradation importante de `InterKL` (`0.083–0.155` vs `0.020–0.031`) et de `ProxyKL` (`0.054–0.068` vs `0.032–0.049`).
+  1. Tous les candidats du Round 3 sont nettement inférieurs au Round 1 (`0.602–0.611`) et à la baseline `AT` (`0.5565`) sur `W_SEL`, avec une dégradation importante de `InterKL` (`0.083–0.137` vs `0.020–0.031`) et de `ProxyKL` (`0.054–0.061` vs `0.032–0.049`).
   2. Le terme `stuck_t4_weight` ($T=4$) couplé à la normalisation de poids et à la projection `head.weight` a détérioré la stabilité des 30 classes retenues sans améliorer le score.
-  3. Sur `R3_f6_ce090_ap20_h4`, `dTheta` atteint **`107.80`** malgré le garde-fou `delta_proxy_kl <= 0.0015`, confirmant que la modification brute des poids `fc1`/`fc2` reste mal contrôlée en norme L2.
+  3. Sur `R3_f6_ce090_ap20_h4`, `dTheta` atteint **`107.80`** malgré le garde-fou `delta_proxy_kl <= 0.0015`, car `fc1.bias = -s * tau_k` (avec `norm2` de norme `~27`) crée un saut de biais non borné dans `fc1`.
   4. **Correction méthodologique (suite à la revue d'inspecteur) :** `W_SEL` est un **diagnostic local de sélectivité**, pas le score officiel du serveur (`gold` caché + copies altérées cachées + `val_acc >= 70%`). L'inversion entre `#10`/`#11` (`W_SEL = 0.6108 / 0.6041` $\to$ serveur `0.0984 / 0.0813`) et `#9` (`W_SEL = 0.5565` $\to$ serveur **`0.1193`**) confirme que seul le **score serveur** fait foi, et que toute affirmation causale sur H1/H2/H3 nécessite des **ablations *one-factor-at-a-time*** à hyperparamètres constants et des folds de test jamais vus pendant la sélection.
+
+### 2026-11-22 (02h40) — Verdict & Plan d'Ablation Contrôlée (*One-Factor-at-a-Time* sur `seed=777`)
+- **Verdict scientifique :** ne pas abandonner la `Piste H` (signal local réel au Round 1 : `W_SEL = 0.6108`, `IntraAcc = 81.9 %`), mais ne pas revendiquer `H1/H2/H3` comme mécanismes validés avant d'avoir isolé leur effet individuel contre `#9` (`AT_ce1.00_b1.8_f6`) et calibré sur le score serveur.
+- **Protocole Round 4 (Ablation pure à 1 facteur à la fois sur folds *held-out* `seed=777`) :**
+  1. `ABL_0_baseline_AT`: réplique exacte de `#9` (`AT_ce1.00_b1.8_f6`, `freeze=6`, `head_lr=1.0`, SalUn statique $t=0$).
+  2. `ABL_1_plus_H1_ortho`: identique à `ABL_0` + uniquement `alpha_proto = 0.25`.
+  3. `ABL_2_plus_H1_gov`: identique à `ABL_0` + uniquement le gouverneur par classe / boost d'instances (sans `stuck_t4_weight`).
+  4. `ABL_3_plus_H2_damp`: identique à `ABL_0` + uniquement modulation dans le masque statique $t=0$ (sans rotation de masque).
