@@ -530,6 +530,15 @@ $$\text{final\_score} = \text{forget\_score} \times \text{retain\_score} \quad \
   - `I2R_f6_r4_ce18_fl085.pt` avait `Full CE = 2.458 ± 1.98` ($\mu+\sigma = 4.44$, `p50 = 2.136`, `ProxyKL = 0.0740`, `dTheta = 6.01`), **mais** `>95% = 0.077` (92 % des images désaturées) et `IntraAcc = 88.5 %`.
   - Son score **`0.0950`** reste solide (proche de `#10` `0.0984` et supérieur à `#11` `0.0813` et `#2` `0.0843`), tout en confirmant la **pente descendante droite** au-delà du sommet `#9` ($\mu+\sigma = 3.96 \to 0.1193$, `4.23 -> 0.0984`, `4.44 -> 0.0950`). La `Piste I` (corridor `CE` ramené de `2.46` vers `[1.55, 1.85]` avec `ProxyKL <= 0.042` et `dTheta <= 4.5` au Round 3) est donc une vraie piste compétitive. *(Prochain créneau `#13` à **`03h27:02`**.)*
 
+### 2026-11-22 (03h29:55) — 13ᵉ Soumission serveur (`SOUP_50_050_50_100.pt`, `submission_id: 2706`) = **`0.1238` (NOUVEAU RECORD, `improved: true`)**
+- **Résultat serveur (`03h29:55`, `task-2664`) :**
+  - `{"submission_id": 2706, "status": "success", "score": 0.1238, "previous_best": 0.1193, "delta": 0.0045, "improved": true, "message": "New best on this task."}`
+- **Pourquoi la soupe 50/50 (`0.50 * #8 + 0.50 * #9`) bat strictement ses deux parents (`0.1099` et `0.1193` $\to$ `0.1238`) :**
+  - `#8` (`AT_ce0.50_b2.0_f6.pt`, $\mu+\sigma = 3.01$, `p50 = 0.397`, `ProxyKL = 0.0413`) $\to$ `0.1099`
+  - `#9` (`AT_ce1.00_b1.8_f6.pt`, $\mu+\sigma = 3.96$, `p50 = 1.214`, `ProxyKL = 0.0486`) $\to$ `0.1193`
+  - **`#13` (`SOUP_50_050_50_100.pt`, $\mu+\sigma = 3.84$, `Full CE = 1.794 ± 2.04`, `p50 = 1.006`, `>95% = 0.21`, `dTheta = 4.48`) $\to$ `0.1238` !**
+  - L'interpolation convexe place `Full CE` et `p50` pile sur le sommet de la cloche tout en réduisant le bruit d'entraînement par rapport à un run individuel. *(Prochain créneau `#14` à **`03h44:55`**.)*
+
 ---
 
 ## 4. Défis techniques priorisés & Stratégies candidates
