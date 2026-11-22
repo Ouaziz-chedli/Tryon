@@ -523,6 +523,13 @@ $$\text{final\_score} = \text{forget\_score} \times \text{retain\_score} \quad \
   4. **Consignation du résultat négatif `Piste H` Round 3 ([track_h_round3.json](../../tracks/03_unlearning_v2/output/track_h/track_h_round3.json)) :**
      - Tous les candidats Round 3 sous-performent : `R3_f6_ce085_ap30_safe` à **`W_SEL = 0.4032 ± 0.088`** (`ProxyKL = 0.0543`, `dTheta = 4.48`), `R3_f6_ce090_ap20` à `0.3420`, `R3_f6_ce090_ap20_h4` à `0.3390` (**`dTheta = 107.80`**, garde-fou L2 insuffisant sur H4), et `R3_f6_ce100_ap15` à `0.3017`. La `Piste H` Round 3 est donc un **résultat négatif** consigné dans [03-unlearning-track-h-journal.md](03-unlearning-track-h-journal.md).
 
+### 2026-11-22 (03h12:02) — 12ᵉ Soumission serveur (`I2R_f6_r4_ce18_fl085.pt`, `submission_id: 2648`) = **`0.0950`** (Test de cohérence sur régime opposé `Piste I`)
+- **Résultat serveur (`03h12:02`, `task-2614`) :**
+  - `{"submission_id": 2648, "status": "success", "score": 0.095, "previous_best": 0.1193, "delta": -0.0244, "improved": false}`
+- **Ce que prouve `0.0950` sur un régime opposé (*Erase-Then-Heal LoRA*) :**
+  - `I2R_f6_r4_ce18_fl085.pt` avait `Full CE = 2.458 ± 1.98` ($\mu+\sigma = 4.44$, `p50 = 2.136`, `ProxyKL = 0.0740`, `dTheta = 6.01`), **mais** `>95% = 0.077` (92 % des images désaturées) et `IntraAcc = 88.5 %`.
+  - Son score **`0.0950`** reste solide (proche de `#10` `0.0984` et supérieur à `#11` `0.0813` et `#2` `0.0843`), tout en confirmant la **pente descendante droite** au-delà du sommet `#9` ($\mu+\sigma = 3.96 \to 0.1193$, `4.23 -> 0.0984`, `4.44 -> 0.0950`). La `Piste I` (corridor `CE` ramené de `2.46` vers `[1.55, 1.85]` avec `ProxyKL <= 0.042` et `dTheta <= 4.5` au Round 3) est donc une vraie piste compétitive. *(Prochain créneau `#13` à **`03h27:02`**.)*
+
 ---
 
 ## 4. Défis techniques priorisés & Stratégies candidates
@@ -617,6 +624,10 @@ $$\text{final\_score} = \text{forget\_score} \times \text{retain\_score} \quad \
 4. **Fonction de perte & augmentations :** `NPO` monte vite `Raw CE` (plus dispersé `±2.3`), `Bad-Teacher` monte `Raw Ent` de façon homogène (`std = 0.25`) ; les augmentations doivent rester **modérées** pour ne pas déformer les features générales (`Proxy KL`).
 
 ---
+
+### Recherche VGT / SCRUB+R (expérimentation isolée)
+- Journal et protocole exploratoire : [[03-unlearning-vgt-journal]].
+- État : implémentation/tests prêts, mais pas de comparaison VGT↔scores serveur réalisée (transfert des checkpoints locaux vers le Colab L4 dédié bloqué). Verdict empirique encore indéterminé ; ne pas confondre proxy VGT et score officiel.
 
 ## 7. Aide pour lire les maths & symboles
 
