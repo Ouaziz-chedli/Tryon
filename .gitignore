@@ -36,3 +36,5 @@ submissions/
 .DS_Store
 .vscode/
 .idea/
+infra/team-access.md
+infra/juelich_ed25519
