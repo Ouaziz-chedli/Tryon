@@ -55,6 +55,7 @@ from run_scrub_r2 import (
     round14_candidates,
     round15_candidates,
     round16_candidates,
+    round17_candidates,
 )
 
 
@@ -683,6 +684,20 @@ def test_round16_candidates_seed_sweep() -> None:
     record_d = {k: v for k, v in asdict(record).items() if k not in skip}
     assert all({k: v for k, v in asdict(c).items() if k not in skip} == record_d for c in cands)
 
+
+def test_round17_candidates_more_lottery_tickets() -> None:
+    cands = round17_candidates()
+    seeds = (121, 131, 141, 151, 161, 171, 181, 191)
+    assert [c.name for c in cands] == [f"SR23_sp115_s{s}" for s in seeds]
+    record = round15_candidates()[1]  # SR21_spread115, the record recipe
+    skip = ("name", "seed")
+    record_d = {k: v for k, v in asdict(record).items() if k not in skip}
+    assert all(
+        {k: v for k, v in asdict(c).items() if k not in skip} == record_d
+        and c.gate_high_mult == 1.15 and c.proxy_seed == 42
+        for c in cands
+    )
+
 if __name__ == "__main__":
     test_round2_candidates_grid_and_control()
     test_high_target_keeps_gate_open_below_ce()
@@ -721,4 +736,5 @@ if __name__ == "__main__":
     test_round15_candidates_surgical_placement()
     test_gate_transforms_offset_then_upper_half_spread()
     test_round16_candidates_seed_sweep()
+    test_round17_candidates_more_lottery_tickets()
     print("SCRUB_R2_TESTS_OK")

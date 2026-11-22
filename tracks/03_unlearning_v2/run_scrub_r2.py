@@ -400,6 +400,14 @@ def round16_candidates() -> list[GateQConfig]:
     ]
 
 
+def round17_candidates() -> list[GateQConfig]:
+    """Round-17: eight MORE lottery tickets on the record recipe (end-of-comp burst)."""
+    spread = {**CHAMPION_RECIPE, "per_image_gate": True, "gate_high_mult": 1.15}
+    return [
+        GateQConfig(name=f"SR23_sp115_s{seed}", **{**spread, "seed": seed})
+        for seed in (121, 131, 141, 151, 161, 171, 181, 191)
+    ]
+
 def _spearman_corr(a: torch.Tensor, b: torch.Tensor) -> float:
     ra = a.argsort().argsort().float()
     rb = b.argsort().argsort().float()
@@ -542,8 +550,8 @@ def _load_round2_data(eval_seed: int) -> tuple:
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="SCRUB+R rounds 2-16 PD-depth grids.")
-    parser.add_argument("--round", type=int, choices=(2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16), default=2)
+    parser = argparse.ArgumentParser(description="SCRUB+R rounds 2-17 PD-depth grids.")
+    parser.add_argument("--round", type=int, choices=(2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17), default=2)
     parser.add_argument("--candidate-id", type=int, default=-1, help="-1 runs all sequentially")
     parser.add_argument("--out-dir", type=Path, default=None)
     parser.add_argument("--eval-seed", type=int, default=777)
@@ -555,7 +563,7 @@ def main() -> int:
         6: round6_candidates(), 7: round7_candidates(),
         8: round8_candidates(), 9: round9_candidates(), 10: round10_candidates(),
         11: round11_candidates(), 12: round12_candidates(), 13: round13_candidates(),
-        14: round14_candidates(), 15: round15_candidates(), 16: round16_candidates(),
+        14: round14_candidates(), 15: round15_candidates(), 16: round16_candidates(), 17: round17_candidates(),
     }
     cands = rounds[args.round]
     if not -1 <= args.candidate_id < len(cands):
