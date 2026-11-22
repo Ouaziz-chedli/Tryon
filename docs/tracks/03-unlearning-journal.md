@@ -545,6 +545,11 @@ $$\text{final\_score} = \text{forget\_score} \times \text{retain\_score} \quad \
 - **Implémentation ([patch_drop_targets.py](../../tracks/03_unlearning_v2/methods/patch_drop_targets.py), [run_patchdrop_ablation.py](../../tracks/03_unlearning_v2/run_patchdrop_ablation.py), [test_patch_drop_targets.py](../../tracks/03_unlearning_v2/tests/test_patch_drop_targets.py)) :**
   - Estimation multi-vues `orig_model` sous **Patch-Dropout 45 %** (`16×16`) + miroir (`estimate_patchdrop_gold_logits`), recalibrée vers le sommet serveur ($\mu_{\text{target}} \in [1.65, 1.80]$) en gardant les 99 logits non-cibles intacts (`calibrate_per_image_targets`), puis optimisation directe par image à $T=2$ + NPO borné par échantillon sur la base propre `#9` (`f6`, SalUn statique $t=0$).
   - Mesure de la corrélation de Spearman `spearman_vs_patchdrop` et test sur folds *held-out* `seed=777` (session Colab A100 `track3_pd`).
+- **Résultats de l'ablation `track3_pd` ([patchdrop_ablation.json](../../tracks/03_unlearning_v2/output/patchdrop_vgt/patchdrop_ablation.json), session `track3_pd` stoppée) :**
+  - `PD_2_kl12_npo00_ce180` : **`rho_PD = +0.640`**, `IntraAcc = 90.9 %`, `W_SEL = 0.3431 ± 0.018`, mais **`Full CE = 0.322 ± 0.64` ($\mu+\sigma = 0.97$)**, `>95% = 0.45`, `InterKL = 0.1077`.
+  - `PD_1_kl10_npo03_ce175` : `rho_PD = +0.623`, `W_SEL = 0.3342 ± 0.021`, `Full CE = 0.361 ± 0.67` ($\mu+\sigma = 1.04$), `>95% = 0.40`.
+  - `PD_3_kl10_npo05_ce165` : `rho_PD = +0.618`, `W_SEL = 0.3305 ± 0.022`, `Full CE = 0.373 ± 0.68` ($\mu+\sigma = 1.06$), `>95% = 0.38`.
+  - *Diagnostic :* le modèle apprend bien l'ordre de difficulté par image (`rho_PD = +0.64`), mais la loss `KL(T=2)` sur les ~80 % d'images faciles (`CE_tgt ~ 0.05–0.25`) domine l'optimisation et maintient le modèle en fort sous-oubli ($\mu+\sigma \approx 1.0 \ll 3.84$). Il faudra n'utiliser `ce_pd` que comme **poids / seuil par échantillon** dans NPO sans terme `KL` sur les cibles faciles.
 
 ### 2026-11-22 (03h49) — Synthèse des ablations *held-out* (`seed=777`) des 3 cellules autonomes
 1. **`Piste H` — Rounds 4–6 (`seed=777`, [03-unlearning-track-h-journal.md](03-unlearning-track-h-journal.md)) :**
