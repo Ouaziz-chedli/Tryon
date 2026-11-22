@@ -122,6 +122,13 @@ def evaluate_real_subset(
     )
 
 
+def _bell_forget_term(m: SplitMetrics, peak_ms: float) -> float:
+    """Bell-shaped forget score peaking at peak_ms (calibrated to server #7-#15 bell curve)."""
+    ms = m.ce_mean + m.ce_std
+    bell = float(np.exp(-(((ms - peak_ms) / 1.35) ** 2)))
+    return bell * (1.0 - 0.35 * m.frac_gt_95)
+
+
 def score_single_fold(
     f_raw: SplitMetrics,
     f_alt: SplitMetrics,
@@ -129,11 +136,11 @@ def score_single_fold(
     r_intra_alt: SplitMetrics,
     r_inter_raw: SplitMetrics,
 ) -> float:
-    """Score one fold using 50/50 exact+altered forget strength, intra selectivity, and inter/intra retention."""
+    """Score one fold using bell-calibrated exact+altered forget strength, intra selectivity, and retention."""
     if r_inter_raw.top1_acc < 0.70 or r_intra_raw.top1_acc < 0.55:
         return 0.0
-    f_raw_ms = min(1.0, (f_raw.ce_mean + f_raw.ce_std) / 5.2) * (1.0 - 0.5 * f_raw.frac_gt_95)
-    f_alt_ms = min(1.0, (f_alt.ce_mean + f_alt.ce_std) / 6.2) * (1.0 - 0.5 * f_alt.frac_gt_95)
+    f_raw_ms = _bell_forget_term(f_raw, peak_ms=3.84)
+    f_alt_ms = _bell_forget_term(f_alt, peak_ms=4.40)
     forget_50_50 = 0.5 * (f_raw_ms + f_alt_ms)
     gap_50_50 = 0.5 * ((f_raw.ce_mean - r_intra_raw.ce_mean) + (f_alt.ce_mean - r_intra_alt.ce_mean))
     sel_bonus = min(1.0, max(0.0, gap_50_50 / 0.65))

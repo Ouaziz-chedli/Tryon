@@ -68,6 +68,16 @@ def test_weighted_fold_scoring_and_aggregation() -> None:
     assert rep.fold_score_std == 0.0
 
 
+def test_bell_forget_term_penalizes_both_under_and_over_unlearning() -> None:
+    from selective_benchmark import SplitMetrics, _bell_forget_term
+
+    m_peak = SplitMetrics(1.80, 2.04, 1.00, 0.50, 0.10, 0.10)
+    m_low = SplitMetrics(1.00, 1.20, 0.40, 0.80, 0.10, 0.05)
+    m_high = SplitMetrics(3.50, 2.50, 3.00, 0.20, 0.10, 0.30)
+    assert _bell_forget_term(m_peak, 3.84) > _bell_forget_term(m_low, 3.84)
+    assert _bell_forget_term(m_peak, 3.84) > _bell_forget_term(m_high, 3.84)
+
+
 if __name__ == "__main__":
     test_rotating_class_folds_cover_all_classes_disjointly()
     test_make_altered_subset_preserves_shape_and_alters_pixels()

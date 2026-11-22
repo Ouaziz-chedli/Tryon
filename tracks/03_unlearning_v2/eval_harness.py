@@ -3,6 +3,7 @@
 import argparse
 from dataclasses import asdict
 import json
+import math
 from pathlib import Path
 import torch
 import torch.nn.functional as F
@@ -24,6 +25,38 @@ def compute_kl_at_temperature(
     p_teacher = F.softmax(teacher_logits.float() / temperature, dim=-1)
     log_p_student = F.log_softmax(student_logits.float() / temperature, dim=-1)
     return F.kl_div(log_p_student, p_teacher, reduction="none").sum(dim=-1)
+
+
+def compute_spearman_rank_corr(a: torch.Tensor, b: torch.Tensor) -> float:
+    """Compute Spearman rank correlation between two 1D tensors."""
+    if a.numel() < 2 or b.numel() != a.numel():
+        return 0.0
+    ra = a.float().argsort().argsort().float()
+    rb = b.float().argsort().argsort().float()
+    ra = ra - ra.mean()
+    rb = rb - rb.mean()
+    denom = (ra.norm() * rb.norm()).clamp_min(1e-8)
+    return round(float((ra * rb).sum().item() / denom.item()), 4)
+
+
+def score_server_calibrated_proxy(
+    ce_mean: float,
+    ce_std: float,
+    ce_p50: float,
+    proxy_kl: float,
+    absent_kl: float,
+    delta_l2: float,
+    rho_pd: float | None = None,
+) -> float:
+    """Estimate server quality on the full 3,500-image checkpoint (bell peak at mu+sig=3.84, p50=1.0)."""
+    mu_sig = ce_mean + ce_std
+    bell = math.exp(-(((mu_sig - 3.84) / 0.90) ** 2))
+    p50_fit = math.exp(-(((ce_p50 - 1.00) / 0.85) ** 2))
+    retain_fit = (1.0 - min(1.0, proxy_kl / 0.16)) * (1.0 - min(1.0, absent_kl / 0.05))
+    dtheta_fit = 1.0 if delta_l2 <= 4.70 else max(0.35, 1.0 - 0.18 * (delta_l2 - 4.70))
+    pd_factor = 1.0 if rho_pd is None else (0.85 + 0.15 * max(0.0, rho_pd))
+    raw = (0.75 * bell + 0.25 * p50_fit) * retain_fit * dtheta_fit * pd_factor
+    return round(float(max(0.0, raw)), 4)
 
 
 def compute_stress_metrics(
