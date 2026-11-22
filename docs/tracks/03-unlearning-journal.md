@@ -241,7 +241,7 @@ $$\text{final\_score} = \text{forget\_score} \times \text{retain\_score} \quad \
 - **Diagnostic racine sur `model.pt` + `clane9/imagenet-100` :**
   1. `ctrl` et `val` n'étaient pas mélangés (`ctrl` = classes `0..49`, `val` = classes `50..99`).
   2. Même avec un split interne du `train` (`heldout_from_train`) et en 2 phases (linear probe -> fine-tuning complet 10 ép., `task-1353`/`task-1358`/`task-1364`), `model.pt` plafonne à `0.3540` (linear probe) / `0.4016` (full FT) — il ne possède pas de features généralistes ImageNet-1k.
-- **Fix dans [build_lab.py](../../tracks/03_unlearning_v2/lab/build_lab.py) :**
+- **Fix dans [build_lab.py](../../tracks/03_unlearning_v2/lab_kl/build_lab_kl.py) :**
   - Cache de `lab_splits.pt` + mélange déterministe (`seed=42`) de `ctrl`/`val` sur toutes les 100 classes.
   - Option `--init-mode pretrained` : initialise `build_model()` depuis `vit_base_patch16_224` pré-entraîné ImageNet-1k (`LayerScale .gamma = 1.0`).
   - En 5 epochs (`task-1437`), convergence à **`orig_lab train_acc = 0.9981`** et **`gold_lab train_acc = 0.9983`**, sauvegardés une fois pour toutes sur `track3`.

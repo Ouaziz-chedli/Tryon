@@ -5,7 +5,6 @@ Repository de l'équipe **TRYON** pour le **European AI Championship Paris 2026*
 ## 🏆 Best solution — Track 3 Machine Unlearning (CISPA eval server, score **0.1283**, 2 records in the final hour)
 
 **"Gold-Bell Quantile Gates"** — a SalUn-masked NPO ascent where each image's forgetting target is a per-image gate mapped from a lognormal bell fitted to 19 server-scored checkpoints, with difficulty ordering from patch-drop gold estimates:
-
 1. **Fit the gold target without a gold model:** every server submission is a measurement; an L1-diamond fit over forget-CE `(μ, σ)` localizes the retrained-gold at `(1.73, 2.27)` — [scripts/gold_bell_fit.py](scripts/gold_bell_fit.py), [docs/tracks/03-unlearning-gold-bell-fit.md](docs/tracks/03-unlearning-gold-bell-fit.md).
 2. **Per-image difficulty ordering:** patch-drop views of the original model rank images by gold-CE with ρ≈0.72 — `estimate_patchdrop_gold_logits` in [tracks/03_unlearning_v2/methods/patch_drop_targets.py](tracks/03_unlearning_v2/methods/patch_drop_targets.py).
 3. **Ranks → bell quantile gates:** hard images push to CE 4-5, easy ones stop at 0.1-0.5; the landed distribution IS the bell by gate construction (NPO halts at the gate) — `quantile_calibrated_targets`, `_apply_gate_transforms`, `npo_per_image_gate_loss` in [tracks/03_unlearning_v2/methods/scrub_r_rest.py](tracks/03_unlearning_v2/methods/scrub_r_rest.py).
@@ -25,7 +24,6 @@ Full experiment log (24 server probes, 6 falsified hypotheses, the Adam invarian
 - **Index complet de la documentation :** [docs/README.md](docs/README.md)
 - **Accès Cluster GPU Jülich (JURECA) :**
   - Guide de setup officiel & Slurm : [docs/infra/gpu-juelich-setup.md](docs/infra/gpu-juelich-setup.md) ([slides](docs/infra/GPU-usage-paris.pdf))
-  - Identifiants équipe, clé SSH & connexion : [infra/team-access.md](infra/team-access.md)
   - Générateur de code TOTP : [scripts/totp.py](scripts/totp.py) (`python3 scripts/totp.py`)
   - Monitoring Slurm & slot équipe en direct : [scripts/jureca_status.py](scripts/jureca_status.py) (`python3 scripts/jureca_status.py [--all|--strict|--json|--watch 35]`)
 
