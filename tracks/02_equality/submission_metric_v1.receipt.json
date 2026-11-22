@@ -1,0 +1,11 @@
+{
+  "recorded_at": "2026-11-22T04:34:18.069901+00:00",
+  "csv": "submission_metric_v1.csv",
+  "csv_sha256": "74e31d9fd4b8eadd50c71ca1112c245f4f07e11e59d576988f46f87fef4bb209",
+  "configuration_id": "060a27ece07393c7be51b48d49a784b65b7a915e918b146e89854c3b14e76044",
+  "accepted": true,
+  "public_score": 0.0,
+  "known_best_before": 0.2,
+  "improved": false,
+  "observed_message": "Submission accepted. Your previous best on this task still leads. Public-split score; final ranking uses the held out subset."
+}

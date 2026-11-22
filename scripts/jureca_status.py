@@ -1,5 +1,10 @@
 #!/usr/bin/env python3
-"""Live JURECA Slurm & reservation monitor for Team TRYON."""
+"""Live JURECA monitor for Team TRYON: reservation vs general partition, host/IP, team jobs.
+
+Sections: [CANAL] pinned host + IPs · [TRYON réservation] (règle 1 slot) ·
+[TRYON partition générale] (hors résa, illimité — doctrine Chef) ·
+[cispahack] état global + par team · [Charge partitions GPU].
+"""
 
 from __future__ import annotations
 
@@ -7,22 +12,17 @@ import argparse
 from collections import Counter
 from dataclasses import asdict, dataclass
 import json
-import os
-from pathlib import Path
-import pty
 import re
-import select
+import socket
 import sys
-import time
+from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from totp import SECRET, compute_totp  # noqa: E402
+from jureca_xfer import BASE_OPTS, SSH_HOST, SSH_KEY, feed_run  # noqa: E402
 
 TEAM_USERS = ("ouaziz1", "sangkhavongs1", "bassim1")
-SSH_HOST = "ouaziz1@jureca.fz-juelich.de"
-ROOT_DIR = Path(__file__).resolve().parent.parent
-SSH_KEY = ROOT_DIR / "infra" / "juelich_ed25519"
-SQUEUE_FMT = "%i|%u|%T|%D|%b|%V|%S|%M|%l|%Z"
+RESERVATION = "cispahack"
+SQUEUE_FMT = "%i|%u|%T|%D|%b|%V|%S|%M|%l|%Z|%P"
 
 
 @dataclass(frozen=True)
@@ -37,6 +37,7 @@ class JobInfo:
     elapsed: str
     limit: str
     workdir: str
+    partition: str
 
 
 @dataclass(frozen=True)
@@ -49,47 +50,24 @@ class ReservationInfo:
     end_time: str
 
 
-def _ssh_exec(remote_cmd: str, timeout: int = 25) -> str:
-    """Run a single remote command on JURECA via SSH + TOTP pty."""
-    code, remaining = compute_totp(SECRET)
-    if remaining <= 2:
-        time.sleep(remaining + 0.5)
-        code, _ = compute_totp(SECRET)
-    cmd = [
-        "ssh", "-i", str(SSH_KEY),
-        "-o", "MACs=hmac-sha2-256-etm@openssh.com",
-        "-o", "ControlMaster=no", "-o", "ControlPath=none",
-        "-o", "ConnectTimeout=8", "-o", "StrictHostKeyChecking=no",
-        SSH_HOST, remote_cmd,
-    ]
-    pid, fd = pty.fork()
-    if pid == 0:
-        os.execvp(cmd[0], cmd)
-    return _read_pty_until_exit(pid, fd, code, timeout)
+@dataclass(frozen=True)
+class ChannelInfo:
+    pinned_host: str
+    local_ip: str
+    remote_hostname: str
+    remote_ip: str
 
 
-def _read_pty_until_exit(pid: int, fd: int, code: str, timeout: int) -> str:
-    """Feed TOTP prompt once and collect SSH stdout until process exits."""
-    out = bytearray()
-    sent = False
-    deadline = time.time() + timeout
-    while time.time() < deadline:
-        ready, _, _ = select.select([fd], [], [], 1.0)
-        if fd in ready:
-            try:
-                chunk = os.read(fd, 4096)
-            except OSError:
-                break
-            if not chunk:
-                break
-            out.extend(chunk)
-            if not sent and (b"Verification code:" in out or b"OTP" in out or b"Password" in out):
-                os.write(fd, (code + "\n").encode())
-                sent = True
-        if os.waitpid(pid, os.WNOHANG)[0] != 0:
-            break
-    os.close(fd)
-    return out.decode(errors="replace")
+def _resolve_ip(host: str) -> str:
+    try:
+        return socket.getaddrinfo(host, None, socket.AF_INET)[0][4][0]
+    except OSError:
+        return "unresolved"
+
+
+def _ssh_exec(remote_cmd: str, timeout: int = 40) -> str:
+    """Single JURECA command via the robust TOTP feeder (multi-code, drift margin)."""
+    return feed_run(["ssh", "-i", str(SSH_KEY), *BASE_OPTS, SSH_HOST, remote_cmd], timeout=timeout)
 
 
 def _extract_section(raw: str, header: str) -> list[str]:
@@ -116,7 +94,7 @@ def _parse_reservation(lines: list[str]) -> ReservationInfo:
     end_m = re.search(r"EndTime=(\S+)", blob)
     nodes = int(node_m.group(1)) if node_m else 0
     return ReservationInfo(
-        name="cispahack",
+        name=RESERVATION,
         state=state_m.group(1) if state_m else "UNKNOWN",
         node_cnt=nodes,
         total_gpus=nodes * 4,
@@ -131,35 +109,61 @@ def _parse_gpus(tres: str) -> int:
 
 
 def _parse_jobs(lines: list[str]) -> list[JobInfo]:
-    """Parse pipe-delimited squeue lines into JobInfo records."""
+    """Parse pipe-delimited squeue lines (11 fields incl. partition) into JobInfo."""
     jobs = []
     for line in lines:
         parts = line.split("|")
         if len(parts) < 10 or not parts[0].isdigit():
             continue
+        partition = parts[10] if len(parts) > 10 else "?"
         jobs.append(JobInfo(
             job_id=parts[0], user=parts[1], state=parts[2],
             nodes=int(parts[3]) if parts[3].isdigit() else 1,
             gpus_per_node=_parse_gpus(parts[4]),
             submit_time=parts[5][-8:], start_time=parts[6][-8:] if parts[6] != "N/A" else "N/A",
-            elapsed=parts[7], limit=parts[8], workdir=parts[9],
+            elapsed=parts[7], limit=parts[8], workdir=parts[9], partition=partition,
         ))
     return jobs
 
 
-def fetch_snapshot() -> tuple[ReservationInfo, list[JobInfo], list[JobInfo]]:
-    """Fetch reservation info, all reservation jobs, and Team TRYON jobs."""
+def fetch_snapshot() -> tuple[ChannelInfo, ReservationInfo, list[JobInfo], list[JobInfo], list[str]]:
+    """One ssh: host, reservation, all reservation jobs, team jobs, GPU partitions load."""
     users = ",".join(TEAM_USERS)
     remote = (
-        "echo '=== RES ==='; scontrol show reservation cispahack; "
-        f"echo '=== ALL ==='; squeue -r --reservation=cispahack -h -o '{SQUEUE_FMT}'; "
-        f"echo '=== TEAM ==='; squeue -u {users} -h -o '{SQUEUE_FMT}'"
+        "echo '=== HOST ==='; hostname; hostname -i 2>/dev/null; hostname -I 2>/dev/null; "
+        f"echo '=== RES ==='; scontrol show reservation {RESERVATION} 2>&1; "
+        f"echo '=== ALL ==='; squeue -r --reservation={RESERVATION} -h -o '{SQUEUE_FMT}'; "
+        f"echo '=== TEAM ==='; squeue -u {users} -h -o '{SQUEUE_FMT}'; "
+        "echo '=== SINFO ==='; sinfo -h -o '%P %D %t' | grep -E '^dc-.*gpu|^gpu' | head -12"
     )
     raw = _ssh_exec(remote)
+    if "=== HOST ===" not in raw:
+        raise RuntimeError(f"SSH FAILED (sortie vide ou TOTP rejeté) — pas de snapshot faux: {raw[-200:]}")
+    host_lines = _extract_section(raw, "HOST")
+    remote_hostname = host_lines[0] if host_lines else "?"
+    remote_ip = next((ln for ln in host_lines[1:] if re.match(r"^[0-9a-f.:]+$", ln)), "?")
+    channel = ChannelInfo(
+        pinned_host=SSH_HOST.split("@")[-1],
+        local_ip=_resolve_ip(SSH_HOST.split("@")[-1]),
+        remote_hostname=remote_hostname,
+        remote_ip=remote_ip,
+    )
     res = _parse_reservation(_extract_section(raw, "RES"))
     all_jobs = _parse_jobs(_extract_section(raw, "ALL"))
     team_jobs = _parse_jobs(_extract_section(raw, "TEAM"))
-    return res, all_jobs, team_jobs
+    sinfo = _extract_section(raw, "SINFO")
+    return channel, res, all_jobs, team_jobs, sinfo
+
+
+def _split_reservation(team_jobs: list[JobInfo], all_jobs: list[JobInfo]) -> tuple[list[JobInfo], list[JobInfo]]:
+    """Team jobs inside the reservation vs outside (partition générale)."""
+    res_ids = {j.job_id.split("_")[0] for j in all_jobs} | {
+        j.job_id.split("_")[0] for j in team_jobs
+        if j.partition and "cispahack" not in str(j.partition)
+    }
+    in_res = [j for j in team_jobs if j.job_id.split("_")[0] in {a.job_id.split("_")[0] for a in all_jobs}]
+    out_res = [j for j in team_jobs if j.job_id.split("_")[0] not in {a.job_id.split("_")[0] for a in all_jobs}]
+    return in_res, out_res
 
 
 _GENERIC_DIRS = {"unlearning", "watermark", "hackathon", "queue", "depot", "code", "kit"}
@@ -175,11 +179,10 @@ def _infer_team(job: JobInfo) -> str:
         if len(parts) >= 2 and parts[1].lower() not in _GENERIC_DIRS and not parts[1].startswith("Hackathon"):
             return parts[1]
         return parts[0]
+    if wd.startswith("/p/home/jusers/"):
+        seg = wd.split("/")[4] if len(wd.split("/")) > 4 else job.user
+        return seg if seg else job.user
     return job.user
-
-
-def _short_team(workdir: str) -> str:
-    return workdir.replace("/p/scratch/training2666/", "").replace("/p/project1/training2666/", "")
 
 
 def _print_team_summary(all_jobs: list[JobInfo]) -> None:
@@ -196,7 +199,7 @@ def _print_team_summary(all_jobs: list[JobInfo]) -> None:
         gpus = sum(j.nodes * j.gpus_per_node for j in active)
         rows.append((nodes, gpus, len(pend), team, len(active), users))
     rows.sort(key=lambda r: (-r[0], -r[1], -r[2], r[3].lower()))
-    print(f"\n=== Par Team ({len(rows)} équipes) ===")
+    print(f"\n=== Par Team dans {RESERVATION} ({len(rows)} équipes) ===")
     print(f"{'TEAM':<20} {'ACT':>3} {'PEND':>4} {'NODES':>5} {'GPUs':>4}  USERS")
     for nodes, gpus, n_pend, team, n_act, users in rows:
         print(f"{team:<20} {n_act:>3} {n_pend:>4} {nodes:>5} {gpus:>4}  {users}")
@@ -207,49 +210,72 @@ def _print_jobs_table(title: str, jobs: list[JobInfo]) -> None:
     if not jobs:
         print("  (aucun job)")
         return
-    print(f"{'TEAM':<18} {'JOBID':>9} {'USER':<15} {'STATE':<11} {'N':>2} {'GPU':>3} {'START':>8} {'ELAPSED':>8} {'LIMIT':>8}")
-    for j in sorted(jobs, key=lambda x: (_infer_team(x).lower(), x.state, x.job_id)):
-        print(f"{_infer_team(j):<18} {j.job_id:>9} {j.user:<15} {j.state:<11} {j.nodes:>2} "
-              f"{j.gpus_per_node:>3} {j.start_time:>8} {j.elapsed:>8} {j.limit:>8}")
+    print(f"{'TEAM':<14} {'JOBID':>11} {'USER':<11} {'STATE':<11} {'N':>2} {'GPU':>3} "
+          f"{'ELAPSED':>9} {'LIMIT':>8} {'PARTITION':<12} WORKDIR")
+    for j in sorted(jobs, key=lambda x: (x.state, x.job_id)):
+        wd = j.workdir.replace("/p/home/jusers/", "~u/").replace("/p/scratch/training2666/", "S:").replace("/p/project1/training2666/", "P:")
+        print(f"{_infer_team(j):<14} {j.job_id:>11} {j.user:<11} {j.state:<11} {j.nodes:>2} "
+              f"{j.gpus_per_node:>3} {j.elapsed:>9} {j.limit:>8} {j.partition:<12} {wd}")
 
 
-def render_report(res: ReservationInfo, all_jobs: list[JobInfo], team_jobs: list[JobInfo], show_all: bool) -> int:
-    """Print Team TRYON occupancy check and reservation summary sorted by team."""
+def render_report(channel: ChannelInfo, res: ReservationInfo, all_jobs: list[JobInfo],
+                  team_jobs: list[JobInfo], sinfo: list[str], show_all: bool) -> int:
+    """Print channel, team jobs split reservation/general, reservation summary, GPU load."""
+    in_res, out_res = _split_reservation(team_jobs, all_jobs)
     counts = Counter(j.state for j in all_jobs)
     alloc_nodes = sum(j.nodes for j in all_jobs if j.state != "PENDING")
     req_gpus = sum(j.nodes * j.gpus_per_node for j in all_jobs if j.state != "PENDING")
-    team_nodes = sum(j.nodes for j in team_jobs)
-    team_gpus = sum(j.nodes * j.gpus_per_node for j in team_jobs)
-    status = "FREE" if not team_jobs else ("OK (1 slot)" if len(team_jobs) == 1 else "VIOLATION (>1 job!)")
+    status = "FREE" if not in_res else ("OK (1 slot résa)" if len(in_res) == 1 else "VIOLATION RÉSA (>1 job!)")
 
-    print(f"[Team TRYON] status={status} | jobs={len(team_jobs)} | nodes={team_nodes} | gpus={team_gpus}")
-    _print_jobs_table("Jobs Équipe TRYON", team_jobs)
-    print(f"\n[cispahack {res.state}] window={res.start_time} -> {res.end_time}")
+    print(f"[CANAL] {channel.pinned_host} -> {channel.local_ip} | login node: "
+          f"{channel.remote_hostname} ({channel.remote_ip})")
+    print(f"[TRYON réservation {RESERVATION}] {status} | jobs={len(in_res)}")
+    _print_jobs_table(f"Jobs TRYON DANS la réservation {RESERVATION}", in_res)
+    print(f"\n[TRYON partition générale] jobs={len(out_res)} (hors résa — illimité, doctrine Chef)")
+    _print_jobs_table("Jobs TRYON HORS réservation (partition générale)", out_res)
+    print(f"\n[{res.name} {res.state}] window={res.start_time} -> {res.end_time}")
     print(f"  Nodes: {alloc_nodes}/{res.node_cnt} | GPUs actifs: {req_gpus}/{res.total_gpus} | States: {dict(counts)}")
     _print_team_summary(all_jobs)
+    if sinfo:
+        print("\n=== Charge partitions GPU (alloc/mixed/idle) ===")
+        for line in sinfo:
+            print(f"  {line}")
     if show_all:
-        _print_jobs_table("Tous les jobs cispahack (triés par team)", all_jobs)
-    return 2 if len(team_jobs) > 1 else 0
+        _print_jobs_table(f"Tous les jobs {RESERVATION} (triés par team)", all_jobs)
+    return 2 if len(in_res) > 1 else 0
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="Live JURECA cispahack & Team TRYON resource checker.")
-    parser.add_argument("--all", action="store_true", help="Afficher tous les jobs de la réservation cispahack.")
+    parser = argparse.ArgumentParser(description="Live JURECA monitor: résera vs générale, canal + IP, team TRYON.")
+    parser.add_argument("--all", action="store_true", help="Afficher aussi tous les jobs de la réservation.")
     parser.add_argument("--json", action="store_true", help="Sortie JSON structurée.")
-    parser.add_argument("--strict", action="store_true", help="Exit code 2 si l'équipe a >1 job actif/en file.")
-    parser.add_argument("--watch", type=int, default=0, help="Rafraîchir toutes les N secondes (>=31s recommandé pour TOTP).")
+    parser.add_argument("--strict", action="store_true", help="Exit 2 si >1 job RÉSERVATION pour l'équipe (la partition générale ne compte pas).")
+    parser.add_argument("--watch", type=int, default=0, help="Rafraîchir toutes les N secondes (>=31s recommandé).")
     args = parser.parse_args()
 
     while True:
-        res, all_jobs, team_jobs = fetch_snapshot()
+        try:
+            channel, res, all_jobs, team_jobs, sinfo = fetch_snapshot()
+        except RuntimeError as exc:
+            print(f"[ERREUR CANAL] {exc}", file=sys.stderr)
+            return 1
         if args.json:
-            payload = {"reservation": asdict(res), "team_jobs": [asdict(j) for j in team_jobs], "all_jobs": [asdict(j) for j in all_jobs]}
+            in_res, out_res = _split_reservation(team_jobs, all_jobs)
+            payload = {
+                "channel": asdict(channel),
+                "reservation": asdict(res),
+                "team_jobs_reservation": [asdict(j) for j in in_res],
+                "team_jobs_general": [asdict(j) for j in out_res],
+                "all_jobs": [asdict(j) for j in all_jobs],
+                "gpu_partitions": sinfo,
+            }
             print(json.dumps(payload, indent=2))
-            rc = 2 if len(team_jobs) > 1 else 0
+            rc = 2 if len(in_res) > 1 else 0
         else:
-            rc = render_report(res, all_jobs, team_jobs, show_all=args.all)
+            rc = render_report(channel, res, all_jobs, team_jobs, sinfo, show_all=args.all)
         if args.watch <= 0:
             return rc if args.strict else 0
+        import time
         time.sleep(max(args.watch, 31))
 
 

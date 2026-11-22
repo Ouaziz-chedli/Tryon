@@ -1,0 +1,3558 @@
+{
+  "selected": {
+    "mode_weight": 1.0,
+    "threshold": 0.35,
+    "stable_threshold_region": [
+      0.35,
+      0.35
+    ],
+    "selection_rule": "training MCC; mode-only then 0.5 then overlap-only; widest contiguous identical-partition optimum; higher region and upper midpoint on ties"
+  },
+  "train": {
+    "score": 0.33149677206589795,
+    "confusion": {
+      "tp": 10,
+      "fp": 18,
+      "fn": 0,
+      "tn": 8
+    },
+    "wrong_pairs": [
+      {
+        "endpoints": [
+          "ref-01",
+          "ref-02"
+        ],
+        "kinds": [
+          "plain",
+          "quantized (fp8)"
+        ],
+        "truth_same": false,
+        "predicted_same": true
+      },
+      {
+        "endpoints": [
+          "ref-01",
+          "ref-04"
+        ],
+        "kinds": [
+          "plain",
+          "LoRA at strength 0.7"
+        ],
+        "truth_same": false,
+        "predicted_same": true
+      },
+      {
+        "endpoints": [
+          "ref-01",
+          "ref-09"
+        ],
+        "kinds": [
+          "plain",
+          "LoRA at strength 0.3"
+        ],
+        "truth_same": false,
+        "predicted_same": true
+      },
+      {
+        "endpoints": [
+          "ref-02",
+          "ref-03"
+        ],
+        "kinds": [
+          "quantized (fp8)",
+          "system prompt"
+        ],
+        "truth_same": false,
+        "predicted_same": true
+      },
+      {
+        "endpoints": [
+          "ref-02",
+          "ref-04"
+        ],
+        "kinds": [
+          "quantized (fp8)",
+          "LoRA at strength 0.7"
+        ],
+        "truth_same": false,
+        "predicted_same": true
+      },
+      {
+        "endpoints": [
+          "ref-02",
+          "ref-05"
+        ],
+        "kinds": [
+          "quantized (fp8)",
+          "persona"
+        ],
+        "truth_same": false,
+        "predicted_same": true
+      },
+      {
+        "endpoints": [
+          "ref-02",
+          "ref-06"
+        ],
+        "kinds": [
+          "quantized (fp8)",
+          "watermark"
+        ],
+        "truth_same": false,
+        "predicted_same": true
+      },
+      {
+        "endpoints": [
+          "ref-02",
+          "ref-08"
+        ],
+        "kinds": [
+          "quantized (fp8)",
+          "sampling at temperature 1.0"
+        ],
+        "truth_same": false,
+        "predicted_same": true
+      },
+      {
+        "endpoints": [
+          "ref-02",
+          "ref-09"
+        ],
+        "kinds": [
+          "quantized (fp8)",
+          "LoRA at strength 0.3"
+        ],
+        "truth_same": false,
+        "predicted_same": true
+      },
+      {
+        "endpoints": [
+          "ref-03",
+          "ref-04"
+        ],
+        "kinds": [
+          "system prompt",
+          "LoRA at strength 0.7"
+        ],
+        "truth_same": false,
+        "predicted_same": true
+      },
+      {
+        "endpoints": [
+          "ref-03",
+          "ref-09"
+        ],
+        "kinds": [
+          "system prompt",
+          "LoRA at strength 0.3"
+        ],
+        "truth_same": false,
+        "predicted_same": true
+      },
+      {
+        "endpoints": [
+          "ref-04",
+          "ref-05"
+        ],
+        "kinds": [
+          "LoRA at strength 0.7",
+          "persona"
+        ],
+        "truth_same": false,
+        "predicted_same": true
+      },
+      {
+        "endpoints": [
+          "ref-04",
+          "ref-06"
+        ],
+        "kinds": [
+          "LoRA at strength 0.7",
+          "watermark"
+        ],
+        "truth_same": false,
+        "predicted_same": true
+      },
+      {
+        "endpoints": [
+          "ref-04",
+          "ref-08"
+        ],
+        "kinds": [
+          "LoRA at strength 0.7",
+          "sampling at temperature 1.0"
+        ],
+        "truth_same": false,
+        "predicted_same": true
+      },
+      {
+        "endpoints": [
+          "ref-04",
+          "ref-09"
+        ],
+        "kinds": [
+          "LoRA at strength 0.7",
+          "LoRA at strength 0.3"
+        ],
+        "truth_same": false,
+        "predicted_same": true
+      },
+      {
+        "endpoints": [
+          "ref-05",
+          "ref-09"
+        ],
+        "kinds": [
+          "persona",
+          "LoRA at strength 0.3"
+        ],
+        "truth_same": false,
+        "predicted_same": true
+      },
+      {
+        "endpoints": [
+          "ref-06",
+          "ref-09"
+        ],
+        "kinds": [
+          "watermark",
+          "LoRA at strength 0.3"
+        ],
+        "truth_same": false,
+        "predicted_same": true
+      },
+      {
+        "endpoints": [
+          "ref-08",
+          "ref-09"
+        ],
+        "kinds": [
+          "sampling at temperature 1.0",
+          "LoRA at strength 0.3"
+        ],
+        "truth_same": false,
+        "predicted_same": true
+      }
+    ],
+    "by_kind_pair": [
+      {
+        "kinds": [
+          "LoRA at strength 0.3",
+          "LoRA at strength 0.7"
+        ],
+        "confusion": {
+          "tp": 0,
+          "fp": 1,
+          "fn": 0,
+          "tn": 0
+        }
+      },
+      {
+        "kinds": [
+          "LoRA at strength 0.3",
+          "LoRA at strength 1.5"
+        ],
+        "confusion": {
+          "tp": 0,
+          "fp": 0,
+          "fn": 0,
+          "tn": 1
+        }
+      },
+      {
+        "kinds": [
+          "LoRA at strength 0.3",
+          "persona"
+        ],
+        "confusion": {
+          "tp": 0,
+          "fp": 1,
+          "fn": 0,
+          "tn": 0
+        }
+      },
+      {
+        "kinds": [
+          "LoRA at strength 0.3",
+          "plain"
+        ],
+        "confusion": {
+          "tp": 0,
+          "fp": 1,
+          "fn": 0,
+          "tn": 0
+        }
+      },
+      {
+        "kinds": [
+          "LoRA at strength 0.3",
+          "quantized (fp8)"
+        ],
+        "confusion": {
+          "tp": 0,
+          "fp": 1,
+          "fn": 0,
+          "tn": 0
+        }
+      },
+      {
+        "kinds": [
+          "LoRA at strength 0.3",
+          "sampling at temperature 1.0"
+        ],
+        "confusion": {
+          "tp": 0,
+          "fp": 1,
+          "fn": 0,
+          "tn": 0
+        }
+      },
+      {
+        "kinds": [
+          "LoRA at strength 0.3",
+          "system prompt"
+        ],
+        "confusion": {
+          "tp": 0,
+          "fp": 1,
+          "fn": 0,
+          "tn": 0
+        }
+      },
+      {
+        "kinds": [
+          "LoRA at strength 0.3",
+          "watermark"
+        ],
+        "confusion": {
+          "tp": 0,
+          "fp": 1,
+          "fn": 0,
+          "tn": 0
+        }
+      },
+      {
+        "kinds": [
+          "LoRA at strength 0.7",
+          "LoRA at strength 1.5"
+        ],
+        "confusion": {
+          "tp": 0,
+          "fp": 0,
+          "fn": 0,
+          "tn": 1
+        }
+      },
+      {
+        "kinds": [
+          "LoRA at strength 0.7",
+          "persona"
+        ],
+        "confusion": {
+          "tp": 0,
+          "fp": 1,
+          "fn": 0,
+          "tn": 0
+        }
+      },
+      {
+        "kinds": [
+          "LoRA at strength 0.7",
+          "plain"
+        ],
+        "confusion": {
+          "tp": 0,
+          "fp": 1,
+          "fn": 0,
+          "tn": 0
+        }
+      },
+      {
+        "kinds": [
+          "LoRA at strength 0.7",
+          "quantized (fp8)"
+        ],
+        "confusion": {
+          "tp": 0,
+          "fp": 1,
+          "fn": 0,
+          "tn": 0
+        }
+      },
+      {
+        "kinds": [
+          "LoRA at strength 0.7",
+          "sampling at temperature 1.0"
+        ],
+        "confusion": {
+          "tp": 0,
+          "fp": 1,
+          "fn": 0,
+          "tn": 0
+        }
+      },
+      {
+        "kinds": [
+          "LoRA at strength 0.7",
+          "system prompt"
+        ],
+        "confusion": {
+          "tp": 0,
+          "fp": 1,
+          "fn": 0,
+          "tn": 0
+        }
+      },
+      {
+        "kinds": [
+          "LoRA at strength 0.7",
+          "watermark"
+        ],
+        "confusion": {
+          "tp": 0,
+          "fp": 1,
+          "fn": 0,
+          "tn": 0
+        }
+      },
+      {
+        "kinds": [
+          "LoRA at strength 1.5",
+          "persona"
+        ],
+        "confusion": {
+          "tp": 0,
+          "fp": 0,
+          "fn": 0,
+          "tn": 1
+        }
+      },
+      {
+        "kinds": [
+          "LoRA at strength 1.5",
+          "plain"
+        ],
+        "confusion": {
+          "tp": 0,
+          "fp": 0,
+          "fn": 0,
+          "tn": 1
+        }
+      },
+      {
+        "kinds": [
+          "LoRA at strength 1.5",
+          "quantized (fp8)"
+        ],
+        "confusion": {
+          "tp": 0,
+          "fp": 0,
+          "fn": 0,
+          "tn": 1
+        }
+      },
+      {
+        "kinds": [
+          "LoRA at strength 1.5",
+          "sampling at temperature 1.0"
+        ],
+        "confusion": {
+          "tp": 0,
+          "fp": 0,
+          "fn": 0,
+          "tn": 1
+        }
+      },
+      {
+        "kinds": [
+          "LoRA at strength 1.5",
+          "system prompt"
+        ],
+        "confusion": {
+          "tp": 0,
+          "fp": 0,
+          "fn": 0,
+          "tn": 1
+        }
+      },
+      {
+        "kinds": [
+          "LoRA at strength 1.5",
+          "watermark"
+        ],
+        "confusion": {
+          "tp": 0,
+          "fp": 0,
+          "fn": 0,
+          "tn": 1
+        }
+      },
+      {
+        "kinds": [
+          "persona",
+          "plain"
+        ],
+        "confusion": {
+          "tp": 1,
+          "fp": 0,
+          "fn": 0,
+          "tn": 0
+        }
+      },
+      {
+        "kinds": [
+          "persona",
+          "quantized (fp8)"
+        ],
+        "confusion": {
+          "tp": 0,
+          "fp": 1,
+          "fn": 0,
+          "tn": 0
+        }
+      },
+      {
+        "kinds": [
+          "persona",
+          "sampling at temperature 1.0"
+        ],
+        "confusion": {
+          "tp": 1,
+          "fp": 0,
+          "fn": 0,
+          "tn": 0
+        }
+      },
+      {
+        "kinds": [
+          "persona",
+          "system prompt"
+        ],
+        "confusion": {
+          "tp": 1,
+          "fp": 0,
+          "fn": 0,
+          "tn": 0
+        }
+      },
+      {
+        "kinds": [
+          "persona",
+          "watermark"
+        ],
+        "confusion": {
+          "tp": 1,
+          "fp": 0,
+          "fn": 0,
+          "tn": 0
+        }
+      },
+      {
+        "kinds": [
+          "plain",
+          "quantized (fp8)"
+        ],
+        "confusion": {
+          "tp": 0,
+          "fp": 1,
+          "fn": 0,
+          "tn": 0
+        }
+      },
+      {
+        "kinds": [
+          "plain",
+          "sampling at temperature 1.0"
+        ],
+        "confusion": {
+          "tp": 1,
+          "fp": 0,
+          "fn": 0,
+          "tn": 0
+        }
+      },
+      {
+        "kinds": [
+          "plain",
+          "system prompt"
+        ],
+        "confusion": {
+          "tp": 1,
+          "fp": 0,
+          "fn": 0,
+          "tn": 0
+        }
+      },
+      {
+        "kinds": [
+          "plain",
+          "watermark"
+        ],
+        "confusion": {
+          "tp": 1,
+          "fp": 0,
+          "fn": 0,
+          "tn": 0
+        }
+      },
+      {
+        "kinds": [
+          "quantized (fp8)",
+          "sampling at temperature 1.0"
+        ],
+        "confusion": {
+          "tp": 0,
+          "fp": 1,
+          "fn": 0,
+          "tn": 0
+        }
+      },
+      {
+        "kinds": [
+          "quantized (fp8)",
+          "system prompt"
+        ],
+        "confusion": {
+          "tp": 0,
+          "fp": 1,
+          "fn": 0,
+          "tn": 0
+        }
+      },
+      {
+        "kinds": [
+          "quantized (fp8)",
+          "watermark"
+        ],
+        "confusion": {
+          "tp": 0,
+          "fp": 1,
+          "fn": 0,
+          "tn": 0
+        }
+      },
+      {
+        "kinds": [
+          "sampling at temperature 1.0",
+          "system prompt"
+        ],
+        "confusion": {
+          "tp": 1,
+          "fp": 0,
+          "fn": 0,
+          "tn": 0
+        }
+      },
+      {
+        "kinds": [
+          "sampling at temperature 1.0",
+          "watermark"
+        ],
+        "confusion": {
+          "tp": 1,
+          "fp": 0,
+          "fn": 0,
+          "tn": 0
+        }
+      },
+      {
+        "kinds": [
+          "system prompt",
+          "watermark"
+        ],
+        "confusion": {
+          "tp": 1,
+          "fp": 0,
+          "fn": 0,
+          "tn": 0
+        }
+      }
+    ],
+    "rows": [
+      {
+        "endpoint": "ref-01",
+        "family": "F0",
+        "model": "M0"
+      },
+      {
+        "endpoint": "ref-02",
+        "family": "F0",
+        "model": "M0"
+      },
+      {
+        "endpoint": "ref-03",
+        "family": "F0",
+        "model": "M0"
+      },
+      {
+        "endpoint": "ref-04",
+        "family": "F0",
+        "model": "M0"
+      },
+      {
+        "endpoint": "ref-05",
+        "family": "F0",
+        "model": "M0"
+      },
+      {
+        "endpoint": "ref-06",
+        "family": "F0",
+        "model": "M0"
+      },
+      {
+        "endpoint": "ref-07",
+        "family": "F0",
+        "model": "M1"
+      },
+      {
+        "endpoint": "ref-08",
+        "family": "F0",
+        "model": "M0"
+      },
+      {
+        "endpoint": "ref-09",
+        "family": "F0",
+        "model": "M0"
+      }
+    ]
+  },
+  "held_out": {
+    "score": 0.0,
+    "confusion": {
+      "tp": 10,
+      "fp": 26,
+      "fn": 0,
+      "tn": 0
+    },
+    "wrong_pairs": [
+      {
+        "endpoints": [
+          "ref-01",
+          "ref-02"
+        ],
+        "kinds": [
+          "plain",
+          "quantized (fp8)"
+        ],
+        "truth_same": false,
+        "predicted_same": true
+      },
+      {
+        "endpoints": [
+          "ref-01",
+          "ref-04"
+        ],
+        "kinds": [
+          "plain",
+          "LoRA at strength 0.7"
+        ],
+        "truth_same": false,
+        "predicted_same": true
+      },
+      {
+        "endpoints": [
+          "ref-01",
+          "ref-07"
+        ],
+        "kinds": [
+          "plain",
+          "LoRA at strength 1.5"
+        ],
+        "truth_same": false,
+        "predicted_same": true
+      },
+      {
+        "endpoints": [
+          "ref-01",
+          "ref-09"
+        ],
+        "kinds": [
+          "plain",
+          "LoRA at strength 0.3"
+        ],
+        "truth_same": false,
+        "predicted_same": true
+      },
+      {
+        "endpoints": [
+          "ref-02",
+          "ref-03"
+        ],
+        "kinds": [
+          "quantized (fp8)",
+          "system prompt"
+        ],
+        "truth_same": false,
+        "predicted_same": true
+      },
+      {
+        "endpoints": [
+          "ref-02",
+          "ref-04"
+        ],
+        "kinds": [
+          "quantized (fp8)",
+          "LoRA at strength 0.7"
+        ],
+        "truth_same": false,
+        "predicted_same": true
+      },
+      {
+        "endpoints": [
+          "ref-02",
+          "ref-05"
+        ],
+        "kinds": [
+          "quantized (fp8)",
+          "persona"
+        ],
+        "truth_same": false,
+        "predicted_same": true
+      },
+      {
+        "endpoints": [
+          "ref-02",
+          "ref-06"
+        ],
+        "kinds": [
+          "quantized (fp8)",
+          "watermark"
+        ],
+        "truth_same": false,
+        "predicted_same": true
+      },
+      {
+        "endpoints": [
+          "ref-02",
+          "ref-07"
+        ],
+        "kinds": [
+          "quantized (fp8)",
+          "LoRA at strength 1.5"
+        ],
+        "truth_same": false,
+        "predicted_same": true
+      },
+      {
+        "endpoints": [
+          "ref-02",
+          "ref-08"
+        ],
+        "kinds": [
+          "quantized (fp8)",
+          "sampling at temperature 1.0"
+        ],
+        "truth_same": false,
+        "predicted_same": true
+      },
+      {
+        "endpoints": [
+          "ref-02",
+          "ref-09"
+        ],
+        "kinds": [
+          "quantized (fp8)",
+          "LoRA at strength 0.3"
+        ],
+        "truth_same": false,
+        "predicted_same": true
+      },
+      {
+        "endpoints": [
+          "ref-03",
+          "ref-04"
+        ],
+        "kinds": [
+          "system prompt",
+          "LoRA at strength 0.7"
+        ],
+        "truth_same": false,
+        "predicted_same": true
+      },
+      {
+        "endpoints": [
+          "ref-03",
+          "ref-07"
+        ],
+        "kinds": [
+          "system prompt",
+          "LoRA at strength 1.5"
+        ],
+        "truth_same": false,
+        "predicted_same": true
+      },
+      {
+        "endpoints": [
+          "ref-03",
+          "ref-09"
+        ],
+        "kinds": [
+          "system prompt",
+          "LoRA at strength 0.3"
+        ],
+        "truth_same": false,
+        "predicted_same": true
+      },
+      {
+        "endpoints": [
+          "ref-04",
+          "ref-05"
+        ],
+        "kinds": [
+          "LoRA at strength 0.7",
+          "persona"
+        ],
+        "truth_same": false,
+        "predicted_same": true
+      },
+      {
+        "endpoints": [
+          "ref-04",
+          "ref-06"
+        ],
+        "kinds": [
+          "LoRA at strength 0.7",
+          "watermark"
+        ],
+        "truth_same": false,
+        "predicted_same": true
+      },
+      {
+        "endpoints": [
+          "ref-04",
+          "ref-07"
+        ],
+        "kinds": [
+          "LoRA at strength 0.7",
+          "LoRA at strength 1.5"
+        ],
+        "truth_same": false,
+        "predicted_same": true
+      },
+      {
+        "endpoints": [
+          "ref-04",
+          "ref-08"
+        ],
+        "kinds": [
+          "LoRA at strength 0.7",
+          "sampling at temperature 1.0"
+        ],
+        "truth_same": false,
+        "predicted_same": true
+      },
+      {
+        "endpoints": [
+          "ref-04",
+          "ref-09"
+        ],
+        "kinds": [
+          "LoRA at strength 0.7",
+          "LoRA at strength 0.3"
+        ],
+        "truth_same": false,
+        "predicted_same": true
+      },
+      {
+        "endpoints": [
+          "ref-05",
+          "ref-07"
+        ],
+        "kinds": [
+          "persona",
+          "LoRA at strength 1.5"
+        ],
+        "truth_same": false,
+        "predicted_same": true
+      },
+      {
+        "endpoints": [
+          "ref-05",
+          "ref-09"
+        ],
+        "kinds": [
+          "persona",
+          "LoRA at strength 0.3"
+        ],
+        "truth_same": false,
+        "predicted_same": true
+      },
+      {
+        "endpoints": [
+          "ref-06",
+          "ref-07"
+        ],
+        "kinds": [
+          "watermark",
+          "LoRA at strength 1.5"
+        ],
+        "truth_same": false,
+        "predicted_same": true
+      },
+      {
+        "endpoints": [
+          "ref-06",
+          "ref-09"
+        ],
+        "kinds": [
+          "watermark",
+          "LoRA at strength 0.3"
+        ],
+        "truth_same": false,
+        "predicted_same": true
+      },
+      {
+        "endpoints": [
+          "ref-07",
+          "ref-08"
+        ],
+        "kinds": [
+          "LoRA at strength 1.5",
+          "sampling at temperature 1.0"
+        ],
+        "truth_same": false,
+        "predicted_same": true
+      },
+      {
+        "endpoints": [
+          "ref-07",
+          "ref-09"
+        ],
+        "kinds": [
+          "LoRA at strength 1.5",
+          "LoRA at strength 0.3"
+        ],
+        "truth_same": false,
+        "predicted_same": true
+      },
+      {
+        "endpoints": [
+          "ref-08",
+          "ref-09"
+        ],
+        "kinds": [
+          "sampling at temperature 1.0",
+          "LoRA at strength 0.3"
+        ],
+        "truth_same": false,
+        "predicted_same": true
+      }
+    ],
+    "by_kind_pair": [
+      {
+        "kinds": [
+          "LoRA at strength 0.3",
+          "LoRA at strength 0.7"
+        ],
+        "confusion": {
+          "tp": 0,
+          "fp": 1,
+          "fn": 0,
+          "tn": 0
+        }
+      },
+      {
+        "kinds": [
+          "LoRA at strength 0.3",
+          "LoRA at strength 1.5"
+        ],
+        "confusion": {
+          "tp": 0,
+          "fp": 1,
+          "fn": 0,
+          "tn": 0
+        }
+      },
+      {
+        "kinds": [
+          "LoRA at strength 0.3",
+          "persona"
+        ],
+        "confusion": {
+          "tp": 0,
+          "fp": 1,
+          "fn": 0,
+          "tn": 0
+        }
+      },
+      {
+        "kinds": [
+          "LoRA at strength 0.3",
+          "plain"
+        ],
+        "confusion": {
+          "tp": 0,
+          "fp": 1,
+          "fn": 0,
+          "tn": 0
+        }
+      },
+      {
+        "kinds": [
+          "LoRA at strength 0.3",
+          "quantized (fp8)"
+        ],
+        "confusion": {
+          "tp": 0,
+          "fp": 1,
+          "fn": 0,
+          "tn": 0
+        }
+      },
+      {
+        "kinds": [
+          "LoRA at strength 0.3",
+          "sampling at temperature 1.0"
+        ],
+        "confusion": {
+          "tp": 0,
+          "fp": 1,
+          "fn": 0,
+          "tn": 0
+        }
+      },
+      {
+        "kinds": [
+          "LoRA at strength 0.3",
+          "system prompt"
+        ],
+        "confusion": {
+          "tp": 0,
+          "fp": 1,
+          "fn": 0,
+          "tn": 0
+        }
+      },
+      {
+        "kinds": [
+          "LoRA at strength 0.3",
+          "watermark"
+        ],
+        "confusion": {
+          "tp": 0,
+          "fp": 1,
+          "fn": 0,
+          "tn": 0
+        }
+      },
+      {
+        "kinds": [
+          "LoRA at strength 0.7",
+          "LoRA at strength 1.5"
+        ],
+        "confusion": {
+          "tp": 0,
+          "fp": 1,
+          "fn": 0,
+          "tn": 0
+        }
+      },
+      {
+        "kinds": [
+          "LoRA at strength 0.7",
+          "persona"
+        ],
+        "confusion": {
+          "tp": 0,
+          "fp": 1,
+          "fn": 0,
+          "tn": 0
+        }
+      },
+      {
+        "kinds": [
+          "LoRA at strength 0.7",
+          "plain"
+        ],
+        "confusion": {
+          "tp": 0,
+          "fp": 1,
+          "fn": 0,
+          "tn": 0
+        }
+      },
+      {
+        "kinds": [
+          "LoRA at strength 0.7",
+          "quantized (fp8)"
+        ],
+        "confusion": {
+          "tp": 0,
+          "fp": 1,
+          "fn": 0,
+          "tn": 0
+        }
+      },
+      {
+        "kinds": [
+          "LoRA at strength 0.7",
+          "sampling at temperature 1.0"
+        ],
+        "confusion": {
+          "tp": 0,
+          "fp": 1,
+          "fn": 0,
+          "tn": 0
+        }
+      },
+      {
+        "kinds": [
+          "LoRA at strength 0.7",
+          "system prompt"
+        ],
+        "confusion": {
+          "tp": 0,
+          "fp": 1,
+          "fn": 0,
+          "tn": 0
+        }
+      },
+      {
+        "kinds": [
+          "LoRA at strength 0.7",
+          "watermark"
+        ],
+        "confusion": {
+          "tp": 0,
+          "fp": 1,
+          "fn": 0,
+          "tn": 0
+        }
+      },
+      {
+        "kinds": [
+          "LoRA at strength 1.5",
+          "persona"
+        ],
+        "confusion": {
+          "tp": 0,
+          "fp": 1,
+          "fn": 0,
+          "tn": 0
+        }
+      },
+      {
+        "kinds": [
+          "LoRA at strength 1.5",
+          "plain"
+        ],
+        "confusion": {
+          "tp": 0,
+          "fp": 1,
+          "fn": 0,
+          "tn": 0
+        }
+      },
+      {
+        "kinds": [
+          "LoRA at strength 1.5",
+          "quantized (fp8)"
+        ],
+        "confusion": {
+          "tp": 0,
+          "fp": 1,
+          "fn": 0,
+          "tn": 0
+        }
+      },
+      {
+        "kinds": [
+          "LoRA at strength 1.5",
+          "sampling at temperature 1.0"
+        ],
+        "confusion": {
+          "tp": 0,
+          "fp": 1,
+          "fn": 0,
+          "tn": 0
+        }
+      },
+      {
+        "kinds": [
+          "LoRA at strength 1.5",
+          "system prompt"
+        ],
+        "confusion": {
+          "tp": 0,
+          "fp": 1,
+          "fn": 0,
+          "tn": 0
+        }
+      },
+      {
+        "kinds": [
+          "LoRA at strength 1.5",
+          "watermark"
+        ],
+        "confusion": {
+          "tp": 0,
+          "fp": 1,
+          "fn": 0,
+          "tn": 0
+        }
+      },
+      {
+        "kinds": [
+          "persona",
+          "plain"
+        ],
+        "confusion": {
+          "tp": 1,
+          "fp": 0,
+          "fn": 0,
+          "tn": 0
+        }
+      },
+      {
+        "kinds": [
+          "persona",
+          "quantized (fp8)"
+        ],
+        "confusion": {
+          "tp": 0,
+          "fp": 1,
+          "fn": 0,
+          "tn": 0
+        }
+      },
+      {
+        "kinds": [
+          "persona",
+          "sampling at temperature 1.0"
+        ],
+        "confusion": {
+          "tp": 1,
+          "fp": 0,
+          "fn": 0,
+          "tn": 0
+        }
+      },
+      {
+        "kinds": [
+          "persona",
+          "system prompt"
+        ],
+        "confusion": {
+          "tp": 1,
+          "fp": 0,
+          "fn": 0,
+          "tn": 0
+        }
+      },
+      {
+        "kinds": [
+          "persona",
+          "watermark"
+        ],
+        "confusion": {
+          "tp": 1,
+          "fp": 0,
+          "fn": 0,
+          "tn": 0
+        }
+      },
+      {
+        "kinds": [
+          "plain",
+          "quantized (fp8)"
+        ],
+        "confusion": {
+          "tp": 0,
+          "fp": 1,
+          "fn": 0,
+          "tn": 0
+        }
+      },
+      {
+        "kinds": [
+          "plain",
+          "sampling at temperature 1.0"
+        ],
+        "confusion": {
+          "tp": 1,
+          "fp": 0,
+          "fn": 0,
+          "tn": 0
+        }
+      },
+      {
+        "kinds": [
+          "plain",
+          "system prompt"
+        ],
+        "confusion": {
+          "tp": 1,
+          "fp": 0,
+          "fn": 0,
+          "tn": 0
+        }
+      },
+      {
+        "kinds": [
+          "plain",
+          "watermark"
+        ],
+        "confusion": {
+          "tp": 1,
+          "fp": 0,
+          "fn": 0,
+          "tn": 0
+        }
+      },
+      {
+        "kinds": [
+          "quantized (fp8)",
+          "sampling at temperature 1.0"
+        ],
+        "confusion": {
+          "tp": 0,
+          "fp": 1,
+          "fn": 0,
+          "tn": 0
+        }
+      },
+      {
+        "kinds": [
+          "quantized (fp8)",
+          "system prompt"
+        ],
+        "confusion": {
+          "tp": 0,
+          "fp": 1,
+          "fn": 0,
+          "tn": 0
+        }
+      },
+      {
+        "kinds": [
+          "quantized (fp8)",
+          "watermark"
+        ],
+        "confusion": {
+          "tp": 0,
+          "fp": 1,
+          "fn": 0,
+          "tn": 0
+        }
+      },
+      {
+        "kinds": [
+          "sampling at temperature 1.0",
+          "system prompt"
+        ],
+        "confusion": {
+          "tp": 1,
+          "fp": 0,
+          "fn": 0,
+          "tn": 0
+        }
+      },
+      {
+        "kinds": [
+          "sampling at temperature 1.0",
+          "watermark"
+        ],
+        "confusion": {
+          "tp": 1,
+          "fp": 0,
+          "fn": 0,
+          "tn": 0
+        }
+      },
+      {
+        "kinds": [
+          "system prompt",
+          "watermark"
+        ],
+        "confusion": {
+          "tp": 1,
+          "fp": 0,
+          "fn": 0,
+          "tn": 0
+        }
+      }
+    ],
+    "rows": [
+      {
+        "endpoint": "ref-01",
+        "family": "F0",
+        "model": "M0"
+      },
+      {
+        "endpoint": "ref-02",
+        "family": "F0",
+        "model": "M0"
+      },
+      {
+        "endpoint": "ref-03",
+        "family": "F0",
+        "model": "M0"
+      },
+      {
+        "endpoint": "ref-04",
+        "family": "F0",
+        "model": "M0"
+      },
+      {
+        "endpoint": "ref-05",
+        "family": "F0",
+        "model": "M0"
+      },
+      {
+        "endpoint": "ref-06",
+        "family": "F0",
+        "model": "M0"
+      },
+      {
+        "endpoint": "ref-07",
+        "family": "F0",
+        "model": "M0"
+      },
+      {
+        "endpoint": "ref-08",
+        "family": "F0",
+        "model": "M0"
+      },
+      {
+        "endpoint": "ref-09",
+        "family": "F0",
+        "model": "M0"
+      }
+    ],
+    "official_csv_score": {
+      "score": 0.0,
+      "pairs": 36,
+      "command": [
+        "score_practice.py",
+        "<temporary-held_out.csv>",
+        "/p/scratch/training2666/ouaziz1/TRYON/model_equality/practice_answers.csv"
+      ],
+      "stdout": "Practice score (MCC over 36 pairs, same model or not): 0.000\nRight: 10 pairs, wrong: 26 (26 wrongly called the same, 0 wrongly called different)\nWrong pairs:\n  ref-01 (plain) and ref-02 (quantized (fp8)): you said same, they are different models\n  ref-01 (plain) and ref-04 (LoRA at strength 0.7): you said same, they are different models\n  ref-01 (plain) and ref-07 (LoRA at strength 1.5): you said same, they are different models\n  ref-01 (plain) and ref-09 (LoRA at strength 0.3): you said same, they are different models\n  ref-02 (quantized (fp8)) and ref-03 (system prompt): you said same, they are different models\n  ref-02 (quantized (fp8)) and ref-04 (LoRA at strength 0.7): you said same, they are different models\n  ref-02 (quantized (fp8)) and ref-05 (persona): you said same, they are different models\n  ref-02 (quantized (fp8)) and ref-06 (watermark): you said same, they are different models\n  ref-02 (quantized (fp8)) and ref-07 (LoRA at strength 1.5): you said same, they are different models\n  ref-02 (quantized (fp8)) and ref-08 (sampling at temperature 1.0): you said same, they are different models\n  ref-02 (quantized (fp8)) and ref-09 (LoRA at strength 0.3): you said same, they are different models\n  ref-03 (system prompt) and ref-04 (LoRA at strength 0.7): you said same, they are different models\n  ref-03 (system prompt) and ref-07 (LoRA at strength 1.5): you said same, they are different models\n  ref-03 (system prompt) and ref-09 (LoRA at strength 0.3): you said same, they are different models\n  ref-04 (LoRA at strength 0.7) and ref-05 (persona): you said same, they are different models\n  ref-04 (LoRA at strength 0.7) and ref-06 (watermark): you said same, they are different models\n  ref-04 (LoRA at strength 0.7) and ref-07 (LoRA at strength 1.5): you said same, they are different models\n  ref-04 (LoRA at strength 0.7) and ref-08 (sampling at temperature 1.0): you said same, they are different models\n  ref-04 (LoRA at strength 0.7) and ref-09 (LoRA at strength 0.3): you said same, they are different models\n  ref-05 (persona) and ref-07 (LoRA at strength 1.5): you said same, they are different models\n  ref-05 (persona) and ref-09 (LoRA at strength 0.3): you said same, they are different models\n  ref-06 (watermark) and ref-07 (LoRA at strength 1.5): you said same, they are different models\n  ref-06 (watermark) and ref-09 (LoRA at strength 0.3): you said same, they are different models\n  ref-07 (LoRA at strength 1.5) and ref-08 (sampling at temperature 1.0): you said same, they are different models\n  ref-07 (LoRA at strength 1.5) and ref-09 (LoRA at strength 0.3): you said same, they are different models\n  ref-08 (sampling at temperature 1.0) and ref-09 (LoRA at strength 0.3): you said same, they are different models"
+    }
+  },
+  "training_grid": [
+    {
+      "mode_weight": 1.0,
+      "threshold": 0.35,
+      "score": 0.33149677206589795
+    },
+    {
+      "mode_weight": 1.0,
+      "threshold": 0.4,
+      "score": 0.020965696734438367
+    },
+    {
+      "mode_weight": 1.0,
+      "threshold": 0.45,
+      "score": 0.0
+    },
+    {
+      "mode_weight": 1.0,
+      "threshold": 0.5,
+      "score": 0.0
+    },
+    {
+      "mode_weight": 1.0,
+      "threshold": 0.55,
+      "score": 0.0
+    },
+    {
+      "mode_weight": 1.0,
+      "threshold": 0.6,
+      "score": 0.0
+    },
+    {
+      "mode_weight": 1.0,
+      "threshold": 0.65,
+      "score": 0.0
+    },
+    {
+      "mode_weight": 1.0,
+      "threshold": 0.7,
+      "score": 0.0
+    },
+    {
+      "mode_weight": 1.0,
+      "threshold": 0.75,
+      "score": 0.0
+    },
+    {
+      "mode_weight": 1.0,
+      "threshold": 0.8,
+      "score": 0.0
+    },
+    {
+      "mode_weight": 1.0,
+      "threshold": 0.85,
+      "score": 0.0
+    },
+    {
+      "mode_weight": 1.0,
+      "threshold": 0.9,
+      "score": 0.0
+    },
+    {
+      "mode_weight": 1.0,
+      "threshold": 0.95,
+      "score": 0.0
+    },
+    {
+      "mode_weight": 0.5,
+      "threshold": 0.35,
+      "score": 0.33149677206589795
+    },
+    {
+      "mode_weight": 0.5,
+      "threshold": 0.4,
+      "score": 0.020965696734438367
+    },
+    {
+      "mode_weight": 0.5,
+      "threshold": 0.45,
+      "score": 0.0
+    },
+    {
+      "mode_weight": 0.5,
+      "threshold": 0.5,
+      "score": 0.0
+    },
+    {
+      "mode_weight": 0.5,
+      "threshold": 0.55,
+      "score": 0.0
+    },
+    {
+      "mode_weight": 0.5,
+      "threshold": 0.6,
+      "score": 0.0
+    },
+    {
+      "mode_weight": 0.5,
+      "threshold": 0.65,
+      "score": 0.0
+    },
+    {
+      "mode_weight": 0.5,
+      "threshold": 0.7,
+      "score": 0.0
+    },
+    {
+      "mode_weight": 0.5,
+      "threshold": 0.75,
+      "score": 0.0
+    },
+    {
+      "mode_weight": 0.5,
+      "threshold": 0.8,
+      "score": 0.0
+    },
+    {
+      "mode_weight": 0.5,
+      "threshold": 0.85,
+      "score": 0.0
+    },
+    {
+      "mode_weight": 0.5,
+      "threshold": 0.9,
+      "score": 0.0
+    },
+    {
+      "mode_weight": 0.5,
+      "threshold": 0.95,
+      "score": 0.0
+    },
+    {
+      "mode_weight": 0.0,
+      "threshold": 0.35,
+      "score": 0.33149677206589795
+    },
+    {
+      "mode_weight": 0.0,
+      "threshold": 0.4,
+      "score": 0.020965696734438367
+    },
+    {
+      "mode_weight": 0.0,
+      "threshold": 0.45,
+      "score": 0.0
+    },
+    {
+      "mode_weight": 0.0,
+      "threshold": 0.5,
+      "score": 0.0
+    },
+    {
+      "mode_weight": 0.0,
+      "threshold": 0.55,
+      "score": 0.1654051028490452
+    },
+    {
+      "mode_weight": 0.0,
+      "threshold": 0.6,
+      "score": 0.0
+    },
+    {
+      "mode_weight": 0.0,
+      "threshold": 0.65,
+      "score": 0.0
+    },
+    {
+      "mode_weight": 0.0,
+      "threshold": 0.7,
+      "score": 0.0
+    },
+    {
+      "mode_weight": 0.0,
+      "threshold": 0.75,
+      "score": 0.0
+    },
+    {
+      "mode_weight": 0.0,
+      "threshold": 0.8,
+      "score": 0.0
+    },
+    {
+      "mode_weight": 0.0,
+      "threshold": 0.85,
+      "score": 0.0
+    },
+    {
+      "mode_weight": 0.0,
+      "threshold": 0.9,
+      "score": 0.0
+    },
+    {
+      "mode_weight": 0.0,
+      "threshold": 0.95,
+      "score": 0.0
+    }
+  ],
+  "coverage": {
+    "ref-01": {
+      "100": 14,
+      "101": 14,
+      "102": 14,
+      "103": 14,
+      "104": 14,
+      "105": 14,
+      "106": 14,
+      "107": 14,
+      "108": 13,
+      "109": 13,
+      "110": 13,
+      "112": 13
+    },
+    "ref-02": {
+      "100": 14,
+      "101": 14,
+      "102": 14,
+      "103": 14,
+      "104": 14,
+      "105": 14,
+      "106": 14,
+      "107": 14,
+      "108": 13,
+      "109": 13,
+      "110": 13,
+      "112": 13
+    },
+    "ref-03": {
+      "100": 14,
+      "101": 14,
+      "102": 14,
+      "103": 14,
+      "104": 14,
+      "105": 14,
+      "106": 14,
+      "107": 14,
+      "108": 13,
+      "109": 13,
+      "110": 13,
+      "112": 13
+    },
+    "ref-04": {
+      "100": 8,
+      "101": 8,
+      "102": 8,
+      "103": 8,
+      "104": 8,
+      "105": 8,
+      "106": 8,
+      "107": 8,
+      "108": 8,
+      "109": 8,
+      "110": 8,
+      "112": 8
+    },
+    "ref-05": {
+      "100": 14,
+      "101": 14,
+      "102": 14,
+      "103": 14,
+      "104": 14,
+      "105": 14,
+      "106": 14,
+      "107": 14,
+      "108": 13,
+      "109": 13,
+      "110": 13,
+      "112": 13
+    },
+    "ref-06": {
+      "100": 14,
+      "101": 14,
+      "102": 14,
+      "103": 14,
+      "104": 14,
+      "105": 14,
+      "106": 14,
+      "107": 14,
+      "108": 13,
+      "109": 13,
+      "110": 13,
+      "112": 13
+    },
+    "ref-07": {
+      "100": 8,
+      "101": 8,
+      "102": 8,
+      "103": 8,
+      "104": 8,
+      "105": 8,
+      "106": 8,
+      "107": 8,
+      "108": 8,
+      "109": 8,
+      "110": 8,
+      "112": 8
+    },
+    "ref-08": {
+      "100": 14,
+      "101": 14,
+      "102": 14,
+      "103": 14,
+      "104": 14,
+      "105": 14,
+      "106": 14,
+      "107": 14,
+      "108": 13,
+      "109": 13,
+      "110": 13,
+      "112": 13
+    },
+    "ref-09": {
+      "100": 14,
+      "101": 14,
+      "102": 14,
+      "103": 14,
+      "104": 14,
+      "105": 14,
+      "106": 14,
+      "107": 14,
+      "108": 13,
+      "109": 13,
+      "110": 13,
+      "112": 13
+    }
+  },
+  "provenance": {
+    "files": {
+      "answers": {
+        "path": "/p/scratch/training2666/ouaziz1/TRYON/model_equality/reference_answers.20261122T025452Z.jsonl",
+        "sha256": "8323ad6071a4b6ceadc10ac76fab6bbe689af0135eb94b8347a9de3bd351bb81"
+      },
+      "truth": {
+        "path": "/p/scratch/training2666/ouaziz1/TRYON/model_equality/practice_answers.csv",
+        "sha256": "ff5a29aef5280bfa6f884f6ebb162ae1dddaa3c9a5182c60eb4ae24488c2efba"
+      },
+      "analyzer": {
+        "path": "/p/scratch/training2666/ouaziz1/TRYON/model_equality/analyze_ep2.py",
+        "sha256": "5249132e4b8b5db61d524a05c364e520122bf080fc957aac7eda9d55a33c7caa"
+      },
+      "partition_exporter": {
+        "path": "/p/scratch/training2666/ouaziz1/TRYON/model_equality/analyze.py",
+        "sha256": "a5cf255823326a0cf0e5b575bb867c77fac4c8b790f151a390514ea162940499"
+      },
+      "scorer": {
+        "path": "/p/scratch/training2666/ouaziz1/TRYON/model_equality/score_practice.py",
+        "sha256": "3c1904dd5f7a366d2c6c4a0151dc2e0e67757ed06b839f92cf0aaa6e2ca2cc2d"
+      },
+      "validator": {
+        "path": "/p/scratch/training2666/ouaziz1/TRYON/model_equality/validate_references.py",
+        "sha256": "42a215f68343052734e39abc67688c9bb16baf1b048e225936d2a9e41cd129bc"
+      }
+    },
+    "seed": 2666,
+    "repeats_per_split": 4,
+    "prompts": [
+      100,
+      101,
+      102,
+      103,
+      104,
+      105,
+      106,
+      107,
+      108,
+      109,
+      110,
+      112
+    ],
+    "references": [
+      "ref-01",
+      "ref-02",
+      "ref-03",
+      "ref-04",
+      "ref-05",
+      "ref-06",
+      "ref-07",
+      "ref-08",
+      "ref-09"
+    ],
+    "split_algorithm": "Python random.Random(seed), sorted reference/prompt order, shuffle original zero-based response indices; first repeats training, next repeats held-out",
+    "python_version": "3.12.15",
+    "selected_response_indices": {
+      "ref-01": {
+        "100": {
+          "training_indices": [
+            0,
+            13,
+            10,
+            11
+          ],
+          "held_out_indices": [
+            2,
+            1,
+            6,
+            5
+          ],
+          "unused_count": 6
+        },
+        "101": {
+          "training_indices": [
+            6,
+            12,
+            8,
+            3
+          ],
+          "held_out_indices": [
+            11,
+            9,
+            10,
+            7
+          ],
+          "unused_count": 6
+        },
+        "102": {
+          "training_indices": [
+            7,
+            13,
+            8,
+            4
+          ],
+          "held_out_indices": [
+            6,
+            9,
+            11,
+            10
+          ],
+          "unused_count": 6
+        },
+        "103": {
+          "training_indices": [
+            2,
+            11,
+            6,
+            7
+          ],
+          "held_out_indices": [
+            9,
+            13,
+            1,
+            0
+          ],
+          "unused_count": 6
+        },
+        "104": {
+          "training_indices": [
+            9,
+            6,
+            0,
+            3
+          ],
+          "held_out_indices": [
+            8,
+            7,
+            2,
+            5
+          ],
+          "unused_count": 6
+        },
+        "105": {
+          "training_indices": [
+            8,
+            5,
+            12,
+            3
+          ],
+          "held_out_indices": [
+            1,
+            11,
+            0,
+            6
+          ],
+          "unused_count": 6
+        },
+        "106": {
+          "training_indices": [
+            0,
+            2,
+            7,
+            1
+          ],
+          "held_out_indices": [
+            12,
+            13,
+            3,
+            6
+          ],
+          "unused_count": 6
+        },
+        "107": {
+          "training_indices": [
+            10,
+            12,
+            5,
+            11
+          ],
+          "held_out_indices": [
+            0,
+            3,
+            4,
+            2
+          ],
+          "unused_count": 6
+        },
+        "108": {
+          "training_indices": [
+            0,
+            6,
+            4,
+            11
+          ],
+          "held_out_indices": [
+            2,
+            8,
+            5,
+            7
+          ],
+          "unused_count": 5
+        },
+        "109": {
+          "training_indices": [
+            10,
+            8,
+            9,
+            3
+          ],
+          "held_out_indices": [
+            12,
+            7,
+            1,
+            2
+          ],
+          "unused_count": 5
+        },
+        "110": {
+          "training_indices": [
+            1,
+            11,
+            9,
+            3
+          ],
+          "held_out_indices": [
+            0,
+            8,
+            5,
+            6
+          ],
+          "unused_count": 5
+        },
+        "112": {
+          "training_indices": [
+            4,
+            6,
+            9,
+            0
+          ],
+          "held_out_indices": [
+            12,
+            3,
+            11,
+            10
+          ],
+          "unused_count": 5
+        }
+      },
+      "ref-02": {
+        "100": {
+          "training_indices": [
+            2,
+            6,
+            7,
+            12
+          ],
+          "held_out_indices": [
+            13,
+            8,
+            11,
+            10
+          ],
+          "unused_count": 6
+        },
+        "101": {
+          "training_indices": [
+            6,
+            13,
+            3,
+            8
+          ],
+          "held_out_indices": [
+            11,
+            2,
+            9,
+            5
+          ],
+          "unused_count": 6
+        },
+        "102": {
+          "training_indices": [
+            12,
+            0,
+            3,
+            5
+          ],
+          "held_out_indices": [
+            8,
+            4,
+            2,
+            9
+          ],
+          "unused_count": 6
+        },
+        "103": {
+          "training_indices": [
+            10,
+            2,
+            0,
+            11
+          ],
+          "held_out_indices": [
+            6,
+            4,
+            1,
+            3
+          ],
+          "unused_count": 6
+        },
+        "104": {
+          "training_indices": [
+            12,
+            4,
+            11,
+            7
+          ],
+          "held_out_indices": [
+            8,
+            10,
+            9,
+            1
+          ],
+          "unused_count": 6
+        },
+        "105": {
+          "training_indices": [
+            10,
+            4,
+            7,
+            1
+          ],
+          "held_out_indices": [
+            3,
+            11,
+            8,
+            2
+          ],
+          "unused_count": 6
+        },
+        "106": {
+          "training_indices": [
+            0,
+            4,
+            2,
+            11
+          ],
+          "held_out_indices": [
+            3,
+            13,
+            12,
+            1
+          ],
+          "unused_count": 6
+        },
+        "107": {
+          "training_indices": [
+            2,
+            0,
+            12,
+            7
+          ],
+          "held_out_indices": [
+            4,
+            11,
+            6,
+            10
+          ],
+          "unused_count": 6
+        },
+        "108": {
+          "training_indices": [
+            10,
+            0,
+            5,
+            6
+          ],
+          "held_out_indices": [
+            11,
+            12,
+            9,
+            4
+          ],
+          "unused_count": 5
+        },
+        "109": {
+          "training_indices": [
+            8,
+            11,
+            1,
+            10
+          ],
+          "held_out_indices": [
+            12,
+            7,
+            6,
+            5
+          ],
+          "unused_count": 5
+        },
+        "110": {
+          "training_indices": [
+            2,
+            12,
+            4,
+            0
+          ],
+          "held_out_indices": [
+            11,
+            3,
+            8,
+            1
+          ],
+          "unused_count": 5
+        },
+        "112": {
+          "training_indices": [
+            2,
+            5,
+            0,
+            1
+          ],
+          "held_out_indices": [
+            9,
+            10,
+            6,
+            8
+          ],
+          "unused_count": 5
+        }
+      },
+      "ref-03": {
+        "100": {
+          "training_indices": [
+            11,
+            7,
+            9,
+            5
+          ],
+          "held_out_indices": [
+            1,
+            13,
+            2,
+            12
+          ],
+          "unused_count": 6
+        },
+        "101": {
+          "training_indices": [
+            8,
+            13,
+            2,
+            12
+          ],
+          "held_out_indices": [
+            10,
+            7,
+            1,
+            3
+          ],
+          "unused_count": 6
+        },
+        "102": {
+          "training_indices": [
+            6,
+            8,
+            13,
+            10
+          ],
+          "held_out_indices": [
+            11,
+            2,
+            7,
+            4
+          ],
+          "unused_count": 6
+        },
+        "103": {
+          "training_indices": [
+            7,
+            0,
+            1,
+            9
+          ],
+          "held_out_indices": [
+            10,
+            11,
+            8,
+            6
+          ],
+          "unused_count": 6
+        },
+        "104": {
+          "training_indices": [
+            1,
+            9,
+            3,
+            8
+          ],
+          "held_out_indices": [
+            12,
+            4,
+            13,
+            6
+          ],
+          "unused_count": 6
+        },
+        "105": {
+          "training_indices": [
+            13,
+            9,
+            3,
+            6
+          ],
+          "held_out_indices": [
+            12,
+            1,
+            4,
+            7
+          ],
+          "unused_count": 6
+        },
+        "106": {
+          "training_indices": [
+            11,
+            13,
+            1,
+            2
+          ],
+          "held_out_indices": [
+            7,
+            0,
+            6,
+            4
+          ],
+          "unused_count": 6
+        },
+        "107": {
+          "training_indices": [
+            12,
+            4,
+            3,
+            7
+          ],
+          "held_out_indices": [
+            9,
+            10,
+            0,
+            8
+          ],
+          "unused_count": 6
+        },
+        "108": {
+          "training_indices": [
+            3,
+            5,
+            0,
+            7
+          ],
+          "held_out_indices": [
+            2,
+            10,
+            4,
+            11
+          ],
+          "unused_count": 5
+        },
+        "109": {
+          "training_indices": [
+            8,
+            11,
+            1,
+            9
+          ],
+          "held_out_indices": [
+            4,
+            2,
+            3,
+            7
+          ],
+          "unused_count": 5
+        },
+        "110": {
+          "training_indices": [
+            8,
+            10,
+            9,
+            6
+          ],
+          "held_out_indices": [
+            4,
+            3,
+            11,
+            7
+          ],
+          "unused_count": 5
+        },
+        "112": {
+          "training_indices": [
+            0,
+            10,
+            12,
+            4
+          ],
+          "held_out_indices": [
+            5,
+            8,
+            6,
+            2
+          ],
+          "unused_count": 5
+        }
+      },
+      "ref-04": {
+        "100": {
+          "training_indices": [
+            1,
+            3,
+            5,
+            2
+          ],
+          "held_out_indices": [
+            6,
+            0,
+            4,
+            7
+          ],
+          "unused_count": 0
+        },
+        "101": {
+          "training_indices": [
+            5,
+            2,
+            0,
+            4
+          ],
+          "held_out_indices": [
+            7,
+            1,
+            3,
+            6
+          ],
+          "unused_count": 0
+        },
+        "102": {
+          "training_indices": [
+            3,
+            1,
+            4,
+            5
+          ],
+          "held_out_indices": [
+            0,
+            7,
+            6,
+            2
+          ],
+          "unused_count": 0
+        },
+        "103": {
+          "training_indices": [
+            3,
+            2,
+            4,
+            6
+          ],
+          "held_out_indices": [
+            0,
+            5,
+            7,
+            1
+          ],
+          "unused_count": 0
+        },
+        "104": {
+          "training_indices": [
+            7,
+            3,
+            5,
+            4
+          ],
+          "held_out_indices": [
+            1,
+            0,
+            6,
+            2
+          ],
+          "unused_count": 0
+        },
+        "105": {
+          "training_indices": [
+            0,
+            4,
+            5,
+            6
+          ],
+          "held_out_indices": [
+            7,
+            1,
+            2,
+            3
+          ],
+          "unused_count": 0
+        },
+        "106": {
+          "training_indices": [
+            7,
+            1,
+            2,
+            0
+          ],
+          "held_out_indices": [
+            3,
+            4,
+            5,
+            6
+          ],
+          "unused_count": 0
+        },
+        "107": {
+          "training_indices": [
+            2,
+            5,
+            3,
+            0
+          ],
+          "held_out_indices": [
+            1,
+            7,
+            6,
+            4
+          ],
+          "unused_count": 0
+        },
+        "108": {
+          "training_indices": [
+            2,
+            5,
+            4,
+            6
+          ],
+          "held_out_indices": [
+            1,
+            0,
+            7,
+            3
+          ],
+          "unused_count": 0
+        },
+        "109": {
+          "training_indices": [
+            1,
+            7,
+            0,
+            4
+          ],
+          "held_out_indices": [
+            2,
+            3,
+            6,
+            5
+          ],
+          "unused_count": 0
+        },
+        "110": {
+          "training_indices": [
+            7,
+            5,
+            6,
+            0
+          ],
+          "held_out_indices": [
+            1,
+            4,
+            3,
+            2
+          ],
+          "unused_count": 0
+        },
+        "112": {
+          "training_indices": [
+            2,
+            1,
+            5,
+            4
+          ],
+          "held_out_indices": [
+            0,
+            6,
+            7,
+            3
+          ],
+          "unused_count": 0
+        }
+      },
+      "ref-05": {
+        "100": {
+          "training_indices": [
+            3,
+            12,
+            1,
+            0
+          ],
+          "held_out_indices": [
+            8,
+            7,
+            5,
+            4
+          ],
+          "unused_count": 6
+        },
+        "101": {
+          "training_indices": [
+            13,
+            0,
+            12,
+            1
+          ],
+          "held_out_indices": [
+            2,
+            3,
+            7,
+            8
+          ],
+          "unused_count": 6
+        },
+        "102": {
+          "training_indices": [
+            4,
+            1,
+            11,
+            8
+          ],
+          "held_out_indices": [
+            13,
+            6,
+            2,
+            5
+          ],
+          "unused_count": 6
+        },
+        "103": {
+          "training_indices": [
+            7,
+            13,
+            6,
+            11
+          ],
+          "held_out_indices": [
+            10,
+            0,
+            12,
+            5
+          ],
+          "unused_count": 6
+        },
+        "104": {
+          "training_indices": [
+            8,
+            0,
+            6,
+            11
+          ],
+          "held_out_indices": [
+            13,
+            7,
+            9,
+            3
+          ],
+          "unused_count": 6
+        },
+        "105": {
+          "training_indices": [
+            12,
+            11,
+            1,
+            9
+          ],
+          "held_out_indices": [
+            4,
+            6,
+            8,
+            2
+          ],
+          "unused_count": 6
+        },
+        "106": {
+          "training_indices": [
+            6,
+            3,
+            11,
+            8
+          ],
+          "held_out_indices": [
+            5,
+            2,
+            10,
+            12
+          ],
+          "unused_count": 6
+        },
+        "107": {
+          "training_indices": [
+            1,
+            4,
+            2,
+            9
+          ],
+          "held_out_indices": [
+            12,
+            8,
+            3,
+            7
+          ],
+          "unused_count": 6
+        },
+        "108": {
+          "training_indices": [
+            12,
+            1,
+            5,
+            3
+          ],
+          "held_out_indices": [
+            9,
+            10,
+            7,
+            2
+          ],
+          "unused_count": 5
+        },
+        "109": {
+          "training_indices": [
+            5,
+            12,
+            3,
+            9
+          ],
+          "held_out_indices": [
+            10,
+            4,
+            0,
+            11
+          ],
+          "unused_count": 5
+        },
+        "110": {
+          "training_indices": [
+            0,
+            1,
+            6,
+            2
+          ],
+          "held_out_indices": [
+            9,
+            10,
+            11,
+            8
+          ],
+          "unused_count": 5
+        },
+        "112": {
+          "training_indices": [
+            2,
+            1,
+            6,
+            9
+          ],
+          "held_out_indices": [
+            0,
+            3,
+            11,
+            10
+          ],
+          "unused_count": 5
+        }
+      },
+      "ref-06": {
+        "100": {
+          "training_indices": [
+            13,
+            6,
+            1,
+            0
+          ],
+          "held_out_indices": [
+            10,
+            3,
+            11,
+            9
+          ],
+          "unused_count": 6
+        },
+        "101": {
+          "training_indices": [
+            11,
+            7,
+            1,
+            5
+          ],
+          "held_out_indices": [
+            12,
+            0,
+            13,
+            10
+          ],
+          "unused_count": 6
+        },
+        "102": {
+          "training_indices": [
+            1,
+            5,
+            3,
+            0
+          ],
+          "held_out_indices": [
+            4,
+            6,
+            9,
+            10
+          ],
+          "unused_count": 6
+        },
+        "103": {
+          "training_indices": [
+            5,
+            13,
+            0,
+            9
+          ],
+          "held_out_indices": [
+            10,
+            11,
+            7,
+            6
+          ],
+          "unused_count": 6
+        },
+        "104": {
+          "training_indices": [
+            3,
+            0,
+            7,
+            8
+          ],
+          "held_out_indices": [
+            13,
+            4,
+            10,
+            11
+          ],
+          "unused_count": 6
+        },
+        "105": {
+          "training_indices": [
+            9,
+            5,
+            8,
+            10
+          ],
+          "held_out_indices": [
+            4,
+            1,
+            0,
+            6
+          ],
+          "unused_count": 6
+        },
+        "106": {
+          "training_indices": [
+            12,
+            2,
+            4,
+            8
+          ],
+          "held_out_indices": [
+            9,
+            10,
+            0,
+            5
+          ],
+          "unused_count": 6
+        },
+        "107": {
+          "training_indices": [
+            0,
+            4,
+            3,
+            8
+          ],
+          "held_out_indices": [
+            11,
+            12,
+            7,
+            9
+          ],
+          "unused_count": 6
+        },
+        "108": {
+          "training_indices": [
+            11,
+            4,
+            12,
+            3
+          ],
+          "held_out_indices": [
+            7,
+            10,
+            5,
+            9
+          ],
+          "unused_count": 5
+        },
+        "109": {
+          "training_indices": [
+            4,
+            12,
+            8,
+            7
+          ],
+          "held_out_indices": [
+            3,
+            1,
+            6,
+            0
+          ],
+          "unused_count": 5
+        },
+        "110": {
+          "training_indices": [
+            5,
+            7,
+            6,
+            1
+          ],
+          "held_out_indices": [
+            4,
+            8,
+            9,
+            3
+          ],
+          "unused_count": 5
+        },
+        "112": {
+          "training_indices": [
+            11,
+            8,
+            12,
+            5
+          ],
+          "held_out_indices": [
+            0,
+            7,
+            4,
+            1
+          ],
+          "unused_count": 5
+        }
+      },
+      "ref-07": {
+        "100": {
+          "training_indices": [
+            0,
+            5,
+            4,
+            7
+          ],
+          "held_out_indices": [
+            2,
+            1,
+            3,
+            6
+          ],
+          "unused_count": 0
+        },
+        "101": {
+          "training_indices": [
+            0,
+            2,
+            5,
+            6
+          ],
+          "held_out_indices": [
+            4,
+            7,
+            3,
+            1
+          ],
+          "unused_count": 0
+        },
+        "102": {
+          "training_indices": [
+            6,
+            3,
+            4,
+            2
+          ],
+          "held_out_indices": [
+            7,
+            5,
+            1,
+            0
+          ],
+          "unused_count": 0
+        },
+        "103": {
+          "training_indices": [
+            7,
+            2,
+            4,
+            5
+          ],
+          "held_out_indices": [
+            0,
+            1,
+            3,
+            6
+          ],
+          "unused_count": 0
+        },
+        "104": {
+          "training_indices": [
+            7,
+            0,
+            5,
+            2
+          ],
+          "held_out_indices": [
+            4,
+            1,
+            6,
+            3
+          ],
+          "unused_count": 0
+        },
+        "105": {
+          "training_indices": [
+            7,
+            3,
+            0,
+            6
+          ],
+          "held_out_indices": [
+            1,
+            4,
+            2,
+            5
+          ],
+          "unused_count": 0
+        },
+        "106": {
+          "training_indices": [
+            2,
+            5,
+            0,
+            6
+          ],
+          "held_out_indices": [
+            7,
+            1,
+            3,
+            4
+          ],
+          "unused_count": 0
+        },
+        "107": {
+          "training_indices": [
+            7,
+            2,
+            1,
+            4
+          ],
+          "held_out_indices": [
+            0,
+            3,
+            6,
+            5
+          ],
+          "unused_count": 0
+        },
+        "108": {
+          "training_indices": [
+            4,
+            7,
+            5,
+            0
+          ],
+          "held_out_indices": [
+            2,
+            6,
+            1,
+            3
+          ],
+          "unused_count": 0
+        },
+        "109": {
+          "training_indices": [
+            5,
+            0,
+            1,
+            6
+          ],
+          "held_out_indices": [
+            7,
+            4,
+            2,
+            3
+          ],
+          "unused_count": 0
+        },
+        "110": {
+          "training_indices": [
+            4,
+            6,
+            2,
+            1
+          ],
+          "held_out_indices": [
+            3,
+            7,
+            5,
+            0
+          ],
+          "unused_count": 0
+        },
+        "112": {
+          "training_indices": [
+            6,
+            2,
+            3,
+            1
+          ],
+          "held_out_indices": [
+            7,
+            0,
+            4,
+            5
+          ],
+          "unused_count": 0
+        }
+      },
+      "ref-08": {
+        "100": {
+          "training_indices": [
+            6,
+            8,
+            3,
+            1
+          ],
+          "held_out_indices": [
+            2,
+            11,
+            13,
+            0
+          ],
+          "unused_count": 6
+        },
+        "101": {
+          "training_indices": [
+            6,
+            13,
+            0,
+            3
+          ],
+          "held_out_indices": [
+            9,
+            5,
+            7,
+            12
+          ],
+          "unused_count": 6
+        },
+        "102": {
+          "training_indices": [
+            5,
+            8,
+            10,
+            7
+          ],
+          "held_out_indices": [
+            12,
+            6,
+            4,
+            2
+          ],
+          "unused_count": 6
+        },
+        "103": {
+          "training_indices": [
+            0,
+            5,
+            3,
+            12
+          ],
+          "held_out_indices": [
+            10,
+            8,
+            9,
+            7
+          ],
+          "unused_count": 6
+        },
+        "104": {
+          "training_indices": [
+            11,
+            8,
+            10,
+            2
+          ],
+          "held_out_indices": [
+            7,
+            3,
+            1,
+            6
+          ],
+          "unused_count": 6
+        },
+        "105": {
+          "training_indices": [
+            7,
+            3,
+            12,
+            11
+          ],
+          "held_out_indices": [
+            9,
+            4,
+            8,
+            2
+          ],
+          "unused_count": 6
+        },
+        "106": {
+          "training_indices": [
+            6,
+            10,
+            2,
+            13
+          ],
+          "held_out_indices": [
+            4,
+            3,
+            8,
+            11
+          ],
+          "unused_count": 6
+        },
+        "107": {
+          "training_indices": [
+            9,
+            6,
+            8,
+            0
+          ],
+          "held_out_indices": [
+            4,
+            5,
+            13,
+            10
+          ],
+          "unused_count": 6
+        },
+        "108": {
+          "training_indices": [
+            6,
+            0,
+            2,
+            5
+          ],
+          "held_out_indices": [
+            11,
+            3,
+            10,
+            12
+          ],
+          "unused_count": 5
+        },
+        "109": {
+          "training_indices": [
+            0,
+            4,
+            11,
+            7
+          ],
+          "held_out_indices": [
+            2,
+            5,
+            1,
+            8
+          ],
+          "unused_count": 5
+        },
+        "110": {
+          "training_indices": [
+            3,
+            0,
+            2,
+            10
+          ],
+          "held_out_indices": [
+            8,
+            11,
+            4,
+            7
+          ],
+          "unused_count": 5
+        },
+        "112": {
+          "training_indices": [
+            3,
+            10,
+            7,
+            12
+          ],
+          "held_out_indices": [
+            4,
+            5,
+            2,
+            0
+          ],
+          "unused_count": 5
+        }
+      },
+      "ref-09": {
+        "100": {
+          "training_indices": [
+            12,
+            7,
+            0,
+            4
+          ],
+          "held_out_indices": [
+            3,
+            8,
+            6,
+            10
+          ],
+          "unused_count": 6
+        },
+        "101": {
+          "training_indices": [
+            13,
+            11,
+            4,
+            9
+          ],
+          "held_out_indices": [
+            1,
+            7,
+            8,
+            3
+          ],
+          "unused_count": 6
+        },
+        "102": {
+          "training_indices": [
+            9,
+            2,
+            12,
+            6
+          ],
+          "held_out_indices": [
+            1,
+            10,
+            4,
+            5
+          ],
+          "unused_count": 6
+        },
+        "103": {
+          "training_indices": [
+            4,
+            2,
+            9,
+            13
+          ],
+          "held_out_indices": [
+            8,
+            5,
+            6,
+            0
+          ],
+          "unused_count": 6
+        },
+        "104": {
+          "training_indices": [
+            3,
+            13,
+            1,
+            11
+          ],
+          "held_out_indices": [
+            0,
+            9,
+            2,
+            6
+          ],
+          "unused_count": 6
+        },
+        "105": {
+          "training_indices": [
+            3,
+            11,
+            9,
+            13
+          ],
+          "held_out_indices": [
+            1,
+            6,
+            4,
+            5
+          ],
+          "unused_count": 6
+        },
+        "106": {
+          "training_indices": [
+            10,
+            4,
+            0,
+            9
+          ],
+          "held_out_indices": [
+            11,
+            13,
+            2,
+            8
+          ],
+          "unused_count": 6
+        },
+        "107": {
+          "training_indices": [
+            9,
+            2,
+            10,
+            11
+          ],
+          "held_out_indices": [
+            5,
+            12,
+            7,
+            6
+          ],
+          "unused_count": 6
+        },
+        "108": {
+          "training_indices": [
+            5,
+            4,
+            6,
+            10
+          ],
+          "held_out_indices": [
+            0,
+            11,
+            12,
+            1
+          ],
+          "unused_count": 5
+        },
+        "109": {
+          "training_indices": [
+            5,
+            8,
+            10,
+            12
+          ],
+          "held_out_indices": [
+            11,
+            7,
+            1,
+            4
+          ],
+          "unused_count": 5
+        },
+        "110": {
+          "training_indices": [
+            6,
+            3,
+            12,
+            4
+          ],
+          "held_out_indices": [
+            9,
+            0,
+            10,
+            11
+          ],
+          "unused_count": 5
+        },
+        "112": {
+          "training_indices": [
+            5,
+            11,
+            1,
+            2
+          ],
+          "held_out_indices": [
+            6,
+            4,
+            10,
+            12
+          ],
+          "unused_count": 5
+        }
+      }
+    },
+    "ignored_endpoints": [],
+    "endpoint_queries": 0,
+    "public_feedback_used": false
+  }
+}

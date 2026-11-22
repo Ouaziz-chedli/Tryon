@@ -1,0 +1,224 @@
+{
+  "groups": {
+    "A": [
+      [
+        "ep-02"
+      ]
+    ],
+    "B": [
+      [
+        "ep-01",
+        "ep-04",
+        "ep-12",
+        "ep-14",
+        "ep-17",
+        "ep-18",
+        "ep-24",
+        "ep-25"
+      ],
+      [
+        "ep-03"
+      ],
+      [
+        "ep-05"
+      ],
+      [
+        "ep-06"
+      ],
+      [
+        "ep-07"
+      ],
+      [
+        "ep-08"
+      ],
+      [
+        "ep-09"
+      ],
+      [
+        "ep-10"
+      ],
+      [
+        "ep-11"
+      ],
+      [
+        "ep-13"
+      ],
+      [
+        "ep-19"
+      ],
+      [
+        "ep-20"
+      ],
+      [
+        "ep-21"
+      ],
+      [
+        "ep-22",
+        "ep-26"
+      ],
+      [
+        "ep-23"
+      ],
+      [
+        "ep-27"
+      ],
+      [
+        "ep-28",
+        "ep-32"
+      ],
+      [
+        "ep-30"
+      ],
+      [
+        "ep-33"
+      ]
+    ],
+    "C": [
+      [
+        "ep-15"
+      ]
+    ],
+    "D": [
+      [
+        "ep-16"
+      ]
+    ],
+    "E": [
+      [
+        "ep-29"
+      ]
+    ],
+    "F": [
+      [
+        "ep-31"
+      ]
+    ]
+  },
+  "source_log_sha256": "e02489c7b67b155574fe2ed360cd0b19fe32ca7bdace84dd631eea9a8a5baaff",
+  "historical_public_score": 0.2,
+  "observed_submission_at": "2026-11-21T23:46:59.086Z",
+  "source_log": "/tmp/ep1_analysis.txt",
+  "source_history_session": "01a1fed6-52d0-71e9-87d6-5a45e825bb13",
+  "source_history_record_index": 1022,
+  "mode": "export_only_control_on_recovered_historical_partition",
+  "reconstructed_not_original_bytes": true,
+  "family_count": 6,
+  "intended_model_count": 24,
+  "historical_exported_model_count": 13,
+  "families": {
+    "ep-02": "A",
+    "ep-01": "B",
+    "ep-04": "B",
+    "ep-12": "B",
+    "ep-14": "B",
+    "ep-17": "B",
+    "ep-18": "B",
+    "ep-24": "B",
+    "ep-25": "B",
+    "ep-03": "B",
+    "ep-05": "B",
+    "ep-06": "B",
+    "ep-07": "B",
+    "ep-08": "B",
+    "ep-09": "B",
+    "ep-10": "B",
+    "ep-11": "B",
+    "ep-13": "B",
+    "ep-19": "B",
+    "ep-20": "B",
+    "ep-21": "B",
+    "ep-22": "B",
+    "ep-26": "B",
+    "ep-23": "B",
+    "ep-27": "B",
+    "ep-28": "B",
+    "ep-32": "B",
+    "ep-30": "B",
+    "ep-33": "B",
+    "ep-15": "C",
+    "ep-16": "D",
+    "ep-29": "E",
+    "ep-31": "F"
+  },
+  "intended_models": {
+    "ep-02": "A_group_0",
+    "ep-01": "B_group_0",
+    "ep-04": "B_group_0",
+    "ep-12": "B_group_0",
+    "ep-14": "B_group_0",
+    "ep-17": "B_group_0",
+    "ep-18": "B_group_0",
+    "ep-24": "B_group_0",
+    "ep-25": "B_group_0",
+    "ep-03": "B_group_1",
+    "ep-05": "B_group_2",
+    "ep-06": "B_group_3",
+    "ep-07": "B_group_4",
+    "ep-08": "B_group_5",
+    "ep-09": "B_group_6",
+    "ep-10": "B_group_7",
+    "ep-11": "B_group_8",
+    "ep-13": "B_group_9",
+    "ep-19": "B_group_10",
+    "ep-20": "B_group_11",
+    "ep-21": "B_group_12",
+    "ep-22": "B_group_13",
+    "ep-26": "B_group_13",
+    "ep-23": "B_group_14",
+    "ep-27": "B_group_15",
+    "ep-28": "B_group_16",
+    "ep-32": "B_group_16",
+    "ep-30": "B_group_17",
+    "ep-33": "B_group_18",
+    "ep-15": "C_group_0",
+    "ep-16": "D_group_0",
+    "ep-29": "E_group_0",
+    "ep-31": "F_group_0"
+  },
+  "historically_exported_models": {
+    "ep-02": "A1",
+    "ep-01": "B1",
+    "ep-04": "B2",
+    "ep-12": "B3",
+    "ep-14": "B4",
+    "ep-17": "B5",
+    "ep-18": "B6",
+    "ep-24": "B7",
+    "ep-25": "B8",
+    "ep-03": "B1",
+    "ep-05": "B1",
+    "ep-06": "B1",
+    "ep-07": "B1",
+    "ep-08": "B1",
+    "ep-09": "B1",
+    "ep-10": "B1",
+    "ep-11": "B1",
+    "ep-13": "B1",
+    "ep-19": "B1",
+    "ep-20": "B1",
+    "ep-21": "B1",
+    "ep-22": "B1",
+    "ep-26": "B2",
+    "ep-23": "B1",
+    "ep-27": "B1",
+    "ep-28": "B1",
+    "ep-32": "B2",
+    "ep-30": "B1",
+    "ep-33": "B1",
+    "ep-15": "C1",
+    "ep-16": "D1",
+    "ep-29": "E1",
+    "ep-31": "F1"
+  },
+  "restored_planned_model_pairs": 30,
+  "removed_unintended_model_pairs": 174,
+  "all_csv_pair_relations_checked": 528,
+  "reconstructed_csv_sha256": "f3914ca6013cbae45732a9d8d1d1adc1506945ea0a9e4820b6e9cb2fb4404550",
+  "corrected_csv_sha256": "5fa703cadefc5b3359caa388d566771814195259cb644220475fa4652b18e878",
+  "source_sha256": {
+    "experiment_metric.py": "bcbf380d7a12283509efa6855ee3648073849d990be0022da05ba70a86b0bedd",
+    "analyze_ep2.py": "909d13b067d21cb7cc400ce6a333bc4bc7bad371776f96c1c41ea2ee441b9ca9",
+    "analyze.py": "a5cf255823326a0cf0e5b575bb867c77fac4c8b790f151a390514ea162940499"
+  },
+  "new_evaluated_queries": 0
+}

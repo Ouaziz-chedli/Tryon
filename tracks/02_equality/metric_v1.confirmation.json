@@ -1,0 +1,30 @@
+{
+  "config": "metric_v1.json",
+  "config_sha256": "060a27ece07393c7be51b48d49a784b65b7a915e918b146e89854c3b14e76044",
+  "recorded_at_utc": "2026-11-22T04:09:30.396573+00:00",
+  "minimum_confirmation_mcc": 0.5,
+  "blocks": [
+    {
+      "report": "metric_v1_holdout_a.json",
+      "report_sha256": "8cf89de6015d0e8cd7d6893796926b760d53cee02bc9f2208fabfa08c1deb925",
+      "data": "reference_metric_v1_holdout_a.jsonl",
+      "data_sha256": "c7716668737315ea91c5fbe8f97b7780ec49b8d53ee40f983fe3db8f19516e70",
+      "csv": "metric_v1_holdout_a.csv",
+      "csv_sha256": "0d977b851022cf466f11329eeac8923c86d60b536f607cd747cc81d94a41aa0b",
+      "mcc": 0.5241424183609592,
+      "official_csv_mcc_rounded": 0.524
+    },
+    {
+      "report": "metric_v1_holdout_b.json",
+      "report_sha256": "2a598731cc78363685003b1920f53caab28643cab878ff9e95816a65271cc829",
+      "data": "reference_metric_v1_holdout_b.jsonl",
+      "data_sha256": "b59f17097565e5610f7a68873972d2040af368362a32df2b29c88a2f2cc202fa",
+      "csv": "metric_v1_holdout_b.csv",
+      "csv_sha256": "0d977b851022cf466f11329eeac8923c86d60b536f607cd747cc81d94a41aa0b",
+      "mcc": 0.5241424183609592,
+      "official_csv_mcc_rounded": 0.524
+    }
+  ],
+  "family_policy": "one_family_until_cross_family_ground_truth_available; never gate model clustering by old family guesses",
+  "limitations": "fp8 and weak LoRA remain merged with the base checkpoint on both reference blocks"
+}

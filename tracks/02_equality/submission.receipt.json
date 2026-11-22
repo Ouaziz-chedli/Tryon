@@ -1,0 +1,12 @@
+{
+  "recorded_at_utc": "2026-11-22T03:04:22.998082+00:00",
+  "candidate_type": "serialization_only_control",
+  "csv_sha256": "344675802b7731494320ea50a872cf8f480fb9ec52a77414e97a126bfaae9408",
+  "accepted": true,
+  "public_score": 0.0,
+  "previous_best_retained": true,
+  "stdout": "Submitting submission.csv to 33-model-equality. Scoring can take a few minutes...\nScore (public split): 0.0\nSubmission accepted. Your previous best on this task still leads. Public-split score; final ranking uses the held out subset.\n",
+  "remaining_evaluated_responses_after_submission": 999,
+  "evaluated_collector_state": "SIGSTOP; PID 1381739; Tsl",
+  "automatic_submission_watcher": "cancelled"
+}

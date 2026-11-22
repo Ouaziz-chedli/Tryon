@@ -15,6 +15,7 @@ Ce guide est destiné aux **agents IA** travaillant sur ce repo pour exécuter d
   /home/chedli/.local/bin/colab sessions
   ```
 - **Tarifs indicatifs :** `L4` (`~1.94 CU/h`), `A100` (`~6.73 CU/h`).
+- **Règle Chef (`2026-11-22 05h20`) :** maximum **3 sessions simultanées** (et non 4) ; le budget CU doit tenir **en permanence** — `colab stop` systématique dès qu'un run est collecté, `colab usage` avant toute création.
 - **Règle de nommage multi-agents :** choisir un nom de session **unique et dédié** (`-s track3_h`, `-s track3_i`, `-s track3_base`, `-s track1_...`). Ne jamais toucher ni stopper la session d'un autre agent.
 
 ---
@@ -34,6 +35,7 @@ Ce guide est destiné aux **agents IA** travaillant sur ce repo pour exécuter d
 > **Piège n°1 — `500 Server Error` sur `colab upload` :**
 > 1. Ne **jamais** inclure `output/`, `results/`, `*.pt`, `*.npz` ou `__pycache__/` dans l'archive (un `.tar.gz` de `300 Mo` fait planter l'API Jupyter `/api/contents/`).
 > 2. Uploader vers `/content/...` (et non `/tmp/...` qui peut échouer selon le montage Jupyter).
+> *Vérifié `2026-11-22` : la limite s'applique AUSSI aux fichiers unitaires — un `.pt` de `343 Mo` uploadé seul échoue en `500 Server Error`. Seuls `scp` (vers JURECA) ou le téléchargement HuggingFace depuis la VM transportent les poids.*
 
 ```bash
 tar --exclude='output' --exclude='results' --exclude='*.pt' --exclude='*.npz' --exclude='__pycache__' \

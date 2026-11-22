@@ -18,6 +18,8 @@ __pycache__/
 data/
 dataset/
 datasets/
+!tracks/03_unlearning_v2/output/virtual_gold/
+!tracks/03_unlearning_v2/output/virtual_gold/*.json
 output/
 outputs/
 submissions/

@@ -1,0 +1,11 @@
+{
+  "recorded_at": "2026-11-22T05:16:11.299805+00:00",
+  "csv": "submission_phase1_exportfix.csv",
+  "csv_sha256": "5fa703cadefc5b3359caa388d566771814195259cb644220475fa4652b18e878",
+  "accepted": true,
+  "public_score": 0.0,
+  "known_best_before": 0.2,
+  "improved": false,
+  "new_evaluated_queries": 0,
+  "observed_message": "Submission accepted. Your previous best on this task still leads. Public-split score; final ranking uses the held out subset."
+}

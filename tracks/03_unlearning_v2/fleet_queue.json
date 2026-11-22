@@ -1,0 +1,74 @@
+{
+  "jobs": {
+    "rerun20": {
+      "status": "submitted",
+      "job_id": "15905433",
+      "sbatch_cmd": "cd $HOME/tryon_ws/unl && sbatch --partition=__PARTITION__ harness_grid/slurm_rerun20.sh",
+      "gate": "idle",
+      "partition_pref": "dc-gpu",
+      "collect_glob": "$HOME/tryon_ws/unl/output/sweep_grid/SG*/metrics.json",
+      "local_dir": "tracks/03_unlearning_v2/output/sweep_grid_rerun",
+      "partition": "cispahack-resa",
+      "submitted_at": 1795326562.5668192
+    },
+    "labkl": {
+      "status": "done",
+      "job_id": "15905549",
+      "sbatch_cmd": "cd $HOME/tryon_ws/unl && sbatch --partition=__PARTITION__ $HOME/tryon_ws/unl/harness_souplab/slurm_labkl.sh",
+      "gate": "idle",
+      "partition_pref": "dc-gpu",
+      "collect_glob": "$HOME/tryon_ws/unl/output/lab_kl/*.json",
+      "local_dir": "tracks/03_unlearning_v2/output/lab_kl",
+      "partition": "cispahack-resa",
+      "submitted_at": 1795328658.6682463,
+      "collected": "nothing to collect"
+    },
+    "surgery": {
+      "status": "failed",
+      "job_id": "15905380",
+      "sbatch_cmd": "cd $HOME/tryon_ws/unl && sbatch --partition=__PARTITION__ harness_surgery/slurm_surgery.sh",
+      "gate": "idle",
+      "partition_pref": "dc-gpu",
+      "collect_glob": "$HOME/tryon_ws/unl/output/surgery/*.json",
+      "local_dir": "tracks/03_unlearning_v2/output/surgery",
+      "partition": "dc-gpu",
+      "submitted_at": 1795326299.3633235,
+      "sacct": "15905380     FAILED   00:00:54      1:0"
+    },
+    "scrub2": {
+      "status": "done",
+      "job_id": "15905382",
+      "sbatch_cmd": "cd $HOME/tryon_ws/unl && sbatch --partition=__PARTITION__ --export=ALL,SLURM_HARNESS_DIR=$HOME/tryon_ws/unl/harness_sr2 harness_sr2/slurm_scrub2.sh",
+      "gate": "idle",
+      "partition_pref": "dc-gpu",
+      "collect_glob": "$HOME/tryon_ws/unl/output/scrub_r2/*/metrics.json",
+      "local_dir": "tracks/03_unlearning_v2/output/scrub_r2",
+      "partition": "dc-gpu",
+      "submitted_at": 1795323850.6052804,
+      "collected": "collected 7 files"
+    },
+    "probes": {
+      "status": "done",
+      "job_id": "15905458",
+      "sbatch_cmd": "cd $HOME/tryon_ws/unl && sbatch --partition=__PARTITION__ harness_grid/slurm_probes.sh",
+      "gate": "idle",
+      "partition_pref": "dc-gpu",
+      "collect_glob": "$HOME/tryon_ws/unl/output/sweep_grid/P*cal_*/metrics.json",
+      "local_dir": "tracks/03_unlearning_v2/output/probes",
+      "partition": "cispahack-resa",
+      "submitted_at": 1795326981.0993872,
+      "collected": "collected 4 files"
+    },
+    "souplab_custom": {
+      "status": "done",
+      "job_id": "15905547",
+      "sbatch_cmd": "cd $HOME/tryon_ws/unl && sbatch --partition=__PARTITION__ harness_grid/slurm_souplab_pairs.sh",
+      "partition_pref": "dc-gpu",
+      "collect_glob": "$HOME/tryon_ws/unl/output/soup_lab_retry/*.json",
+      "local_dir": "tracks/03_unlearning_v2/output/soup_lab",
+      "partition": "cispahack-resa",
+      "submitted_at": 1795328658.6682477,
+      "collected": "nothing to collect"
+    }
+  }
+}

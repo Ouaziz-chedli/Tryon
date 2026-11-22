@@ -1,4 +1,4 @@
-"""Training-time augmentations (none, moderate, strong) for altered-copy generalization."""
+"""Training-time augmentations (identity, none, moderate, strong) for altered-copy generalization."""
 
 import torch
 import torchvision.transforms.v2 as T
@@ -26,7 +26,9 @@ _STRONG_AUG = T.Compose(
 
 
 def augment_training_batch(images_uint8: torch.Tensor, mode: str = "moderate") -> torch.Tensor:
-    """Apply 'none' (hflip-only), 'moderate', or 'strong' augmentations to [B, H, W, 3] uint8."""
+    """Apply 'identity' (verbatim), 'none' (hflip-only), 'moderate', or 'strong' to [B, H, W, 3] uint8."""
+    if mode == "identity":
+        return images_uint8
     if mode == "none":
         flipped = torch.flip(images_uint8, dims=[2])
         mask = torch.rand(len(images_uint8), device=images_uint8.device) < 0.5
