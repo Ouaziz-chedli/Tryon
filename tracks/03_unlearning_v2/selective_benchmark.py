@@ -8,7 +8,7 @@ import numpy as np
 import torch
 import torch.nn.functional as F
 
-from augment import make_stress_suite
+from augment import augment_training_batch
 from auto_tune_4gpu import _build_train_proxy, run_adaptive_salun_npo
 from contracts import MethodConfig
 from eval_harness import compute_kl_at_temperature, evaluate_candidate
@@ -92,12 +92,11 @@ def make_rotating_class_folds(
 
 
 def make_altered_subset(images: torch.Tensor, seed: int = 123) -> torch.Tensor:
-    """Create a deterministic altered copy of `images` mixing hflip, crop80, color_jitter, blur."""
-    suite = make_stress_suite(images, seed=seed)
-    keys = list(suite.keys())
-    out = images.clone()
-    for idx, key in enumerate(keys):
-        out[idx :: len(keys)] = suite[key][idx :: len(keys)]
+    """Create a deterministic altered copy of `images` (crop, hflip, jitter, blur)."""
+    torch.manual_seed(seed)
+    chunks = [augment_training_batch(images[i : i + 256], mode="moderate") for i in range(0, len(images), 256)]
+    out = torch.cat(chunks, dim=0)
+    out[1::2] = torch.flip(out[1::2], dims=[2])
     return out
 
 

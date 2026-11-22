@@ -429,6 +429,23 @@ $$\text{final\_score} = \text{forget\_score} \times \text{retain\_score} \quad \
   - **Conclusion majeure :** la proportionnalité quasi parfaite entre $\mu_{\text{sub}} + \sigma_{\text{sub}}$ et le score serveur (`1.373× vs 1.396×` et `1.816× vs 1.930×`) démontre que **même `#5` (`CE = 1.438 ± 2.01`, `p50 = 0.380`) est encore en dessous de $(\mu_{\text{gold}}, \sigma_{\text{gold}})$** ! Réduire `CE` de `1.44 ± 2.01` à `0.70 ± 1.19` (`#7`) a divisé le score par deux (`0.1166 -> 0.0604`) parce qu'on s'est rapproché de `orig` au lieu de monter vers `gold` ($\mu_{\text{gold}} \approx 2.2\text{--}3.2$, $\sigma_{\text{gold}} \approx 3.0\text{--}4.0$, soit $\mu_{\text{gold}} + \sigma_{\text{gold}} \approx 5.5\text{--}7.5$).
   - **Conséquence immédiate :** il faut aller dans la direction opposée à la réduction de CE — viser **`target_forget_ce` plus haut (`0.85` à `1.50`, soit `CE mean ~ 2.0–2.8`, `p50 ~ 0.80–1.40`, `>95% < 0.15`)** tout en gardant la sélectivité SalUn (`keep_ratio = 0.20`, `weight_decay = 0.0`, `ProxyKL <= 0.055`). Or nous avons déjà sur JURECA dans `/p/scratch/training2666/ouaziz1/TRYON/unlearning/output/bounded_sweep/` les checkpoints `B_ce0.65_*`, `B_ce0.85_*` et `B_ce1.05_*` du job `15903458` !
 
+### 2026-11-22 (01h08–01h32) — Résultats complets du Benchmark Sélectif Pondéré 3-Folds « Oubli Fort » (6 candidats, 2× A100 Colab)
+- **Protocole exécuté ([selective_benchmark.py](../../tracks/03_unlearning_v2/selective_benchmark.py)) :** rotation sur **$K = 3$ folds disjoints de 15 classes actives** couvrant la totalité des 45 classes actives de `forget_images.npz` (sans aucune fuite entre le sous-ensemble oublié $F_k$, le contrôle Intra-Classe $R_{k,\text{intra}}$ de la même classe en version **exacte + altérée**, et le contrôle Inter-Classes $R_{k,\text{inter}}$ sur les 30 autres classes actives), suivie de l'entraînement du checkpoint complet `.pt` (`3 500` images).
+- **Classement complet des 6 candidats (`selective_worker_0.json` + `selective_worker_1.json`, les 2 VMs Colab stoppées à `0 CU/h`) :**
+
+| Rang | Candidat | Worker | **Score Pondéré `W_SEL ± std`** | **3-Folds `F_raw` / `F_alt`** | **3-Folds `Gap50`** | **3-Folds `IntraAcc`** | **3-Folds `InterAcc` (`InterKL`)** | **Full `.pt` `CE mean ± std` ($\mu+\sigma$)** | **Full `p50` (`>95%`)** | **Full `ProxyKL` (`dTheta`)** |
+| :---: | :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
+| **1** | **`AT_ce1.00_b1.8_f6`** | `gpu0` | **`0.5565 ± 0.019`** | **`2.61` / `2.74`** | **`+1.47`** | **`73.3 %`** | **`99.8 %` (`0.0312`)** | **`1.909 ± 2.05` (`3.96`)** | **`1.214` (`0.19`)** | **`0.0486` (`4.61`)** |
+| **2** | **`AT_ce1.40_b1.5_f8`** | `gpu1` | **`0.5451 ± 0.006`** | **`3.24` / `3.37`** | **`+1.69`** | `63.8 %` | **`99.9 %` (`0.0226`)** | **`2.547 ± 3.00` (`5.55`)** | **`1.390` (`0.31`)** | **`0.0422` (`4.56`)** |
+| **3** | **`AT_ce1.40_b1.5_f6`** | `gpu0` | `0.4856 ± 0.023` | `3.47` / `3.59` | **`+1.78`** | `63.3 %` | `99.6 %` (`0.0474`) | **`2.089 ± 2.21` (`4.30`)** | **`1.370` (`0.17`)** | `0.0510` (`4.61`) |
+| **4** | `AT_ce1.80_b1.2_f6` | `gpu1` | `0.3268 ± 0.270` | `3.30` / `3.43` | `+1.79` | `68.2 %` | `99.8 %` (`0.0359`) | `2.621 ± 2.66` (`5.28`) | `1.838` (`0.18`) | `0.0487` (`4.73`) |
+| **5** | `TS_ce1.20_u2.40_b1.5_f6` | `gpu0` | `0.2000 ± 0.137` | `1.39` / `1.55` | `+0.65` | `72.8 %` | `99.6 %` (`0.1665`) | `1.017 ± 1.19` (`2.21`) | `0.563` (`0.22`) | `0.0488` (`4.49`) |
+| **6** | `TS_ce1.60_u2.80_b1.2_f6` | `gpu1` | `0.1015 ± 0.118` | `1.71` / `1.87` | `+0.72` | `64.5 %` | `99.2 %` (`0.2413`) | `1.205 ± 1.34` (`2.55`) | `0.726` (`0.20`) | `0.0506` (`4.59`) |
+
+- **Analyse & Checkpoints rapatriés en local (`tracks/03_unlearning_v2/output/selective_strong/`) :**
+  1. **`AT_ce1.00_b1.8_f6.pt` (Rang #1, `W_SEL = 0.5565 ± 0.019`) :** seul candidat « Oubli Fort » qui maintient **`IntraAcc = 73.3 % >= 70 %`** sur les images retenues des classes oubliées tout en multipliant par `3.2×` la médiane d'oubli (`p50 = 1.214` vs `0.380` sur `#5`), en divisant par `2` la fraction saturée (`>95% = 0.19` vs `0.37` sur `#5`) et en gardant `ProxyKL = 0.0486` (`< 0.0551` sur `#5`) et `InterKL = 0.0312`.
+  2. **`AT_ce1.40_b1.5_f8.pt` (Rang #2, `W_SEL = 0.5451 ± 0.006`) :** chirurgie `blocks.8..11` avec la plus faible dérive inter-classes de tout le benchmark (**`InterAcc = 99.9 %`**, **`InterKL = 0.0226`**, `ProxyKL = 0.0422`) et une amplitude forte ($\mu+\sigma = 5.55$, `p50 = 1.390`).
+
 ---
 
 ## 4. Défis techniques priorisés & Stratégies candidates
