@@ -1,6 +1,22 @@
 # European AI Championship Paris 2026 — Team `TRYON`
 
-Repository privé de l'équipe **TRYON** pour le **European AI Championship Paris 2026** (CISPA / Jülich JURECA).
+Repository de l'équipe **TRYON** pour le **European AI Championship Paris 2026** (CISPA / Jülich JURECA).
+
+## 🏆 Best solution — Track 3 Machine Unlearning (CISPA eval server, score **0.1283**, 2 records in the final hour)
+
+**"Gold-Bell Quantile Gates"** — a SalUn-masked NPO ascent where each image's forgetting target is a per-image gate mapped from a lognormal bell fitted to 19 server-scored checkpoints, with difficulty ordering from patch-drop gold estimates:
+
+1. **Fit the gold target without a gold model:** every server submission is a measurement; an L1-diamond fit over forget-CE `(μ, σ)` localizes the retrained-gold at `(1.73, 2.27)` — [scripts/gold_bell_fit.py](scripts/gold_bell_fit.py), [docs/tracks/03-unlearning-gold-bell-fit.md](docs/tracks/03-unlearning-gold-bell-fit.md).
+2. **Per-image difficulty ordering:** patch-drop views of the original model rank images by gold-CE with ρ≈0.72 — `estimate_patchdrop_gold_logits` in [tracks/03_unlearning_v2/methods/patch_drop_targets.py](tracks/03_unlearning_v2/methods/patch_drop_targets.py).
+3. **Ranks → bell quantile gates:** hard images push to CE 4-5, easy ones stop at 0.1-0.5; the landed distribution IS the bell by gate construction (NPO halts at the gate) — `quantile_calibrated_targets`, `_apply_gate_transforms`, `npo_per_image_gate_loss` in [tracks/03_unlearning_v2/methods/scrub_r_rest.py](tracks/03_unlearning_v2/methods/scrub_r_rest.py).
+4. **Champion grid recipe:** lr 1e-4, 210 steps, β 2.0, retain-KL 2.8, SalUn keep 0.20, upper-half gate spread ×1.15, seed 101 — `round15_candidates()` in [tracks/03_unlearning_v2/run_scrub_r2.py](tracks/03_unlearning_v2/run_scrub_r2.py) (`--round 15 --candidate-id 1` regenerates the record in ~8 min on 1×A100).
+5. **Hard-budget selection:** ProxyKL ≤ 0.056, Δθ ≤ 4.70 (budgeted rewind) + a 17-point proxy eval suite — [tracks/03_unlearning_v2/eval_harness.py](tracks/03_unlearning_v2/eval_harness.py).
+
+Full experiment log (24 server probes, 6 falsified hypotheses, the Adam invariance / transient refinement diagnostics): [docs/tracks/03-unlearning-journal.md](docs/tracks/03-unlearning-journal.md).
+
+**Track 2 Model Equality:** 33 black-box LLM endpoints audited under a 100-responses/endpoint budget — discriminative per-pair probes (quantization fingerprints, LoRA fingerprints) + family pre-clustering: [tracks/02_equality/](tracks/02_equality/), answers in `answers.jsonl`, methodology in [docs/tracks/02-model-equality.md](docs/tracks/02-model-equality.md).
+
+**Track 1 Watermark Localization:** methodology and experiments in [docs/tracks/01-watermark-localization.md](docs/tracks/01-watermark-localization.md).
 
 ## Navigation rapide
 
